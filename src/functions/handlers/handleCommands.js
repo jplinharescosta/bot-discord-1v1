@@ -1,6 +1,6 @@
-import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v10";
-import fs from "fs";
+const { REST } = require("@discordjs/rest");
+const { Routes } = require("discord-api-types/v9");
+const fs = require("fs");
 
 module.exports = (client) => {
   client.handleCommands = async () => {
@@ -18,8 +18,8 @@ module.exports = (client) => {
       }
     }
 
-    const clientId = "";
-    const guildId = "";
+    const clientId = "1195502364262682724";
+    const guildId = "1217111028911837184";
     const rest = new REST({ version: "10" }).setToken(process.env.token);
 
     try {

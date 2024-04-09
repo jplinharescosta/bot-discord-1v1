@@ -1,5 +1,5 @@
-import fs from "fs";
-import { connection } from "mongoose";
+const fs = require("fs");
+const { connection } = require("mongoose");
 
 module.exports = (client) => {
   client.handleEvents = async () => {

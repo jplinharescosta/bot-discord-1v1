@@ -2,14 +2,15 @@
   "name": "discordbotfivem",
   "version": "1.0.0",
   "description": "ALPHA VERSION",
-  "main": "index.js",
-  "type": "module",
+  "main": "src/bot.js",
+  "type": "commonjs",
   "scripts": {
-    "start": "src/bot.js"
+    "start": "node ."
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "chalk": "^4.1.2",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "mongoose": "^8.3.1"

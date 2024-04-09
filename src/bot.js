@@ -1,8 +1,8 @@
-import "dotenv/config";
-import { connect } from "mongoose";
-import { Client, Collection, GatewayIntentBits } from "discord.js";
-import fs from "fs";
-const { token, databaseToken } = process.env;
+require("dotenv").config();
+const { token, databaseToken, slaveToken } = process.env;
+const { connect } = require("mongoose");
+const { Client, Collection, GatewayIntentBits } = require("discord.js");
+const fs = require("fs");
 
 const client = new Client({
   intents: [
