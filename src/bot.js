@@ -4,14 +4,16 @@ const { connect } = require("mongoose");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 
-const queues = {
-  AdmQueue: [],
-  GeneralQueue: [],
-  Queue1v1: [],
-  Queue2v2: [],
-  Queue3v3: [],
-  Queue4v4: [],
-  Queue5v5: [],
+module.exports = {
+  queues: {
+    AdmQueue: [],
+    GeneralQueue: [],
+    "1v1": [],
+    "2v2": [],
+    "3v3": [],
+    "4v4": [],
+    "5v5": [],
+  },
 };
 
 const client = new Client({

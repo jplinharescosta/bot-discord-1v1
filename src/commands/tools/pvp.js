@@ -42,7 +42,7 @@ module.exports = {
     });
 
     const exitButton = new ButtonBuilder({
-      custom_id: "sair-fila",
+      custom_id: "sairFila",
       label: "Sair da fila",
       style: ButtonStyle.Danger,
     });
