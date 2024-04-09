@@ -9,11 +9,11 @@ module.exports = (client) => {
       const commandFiles = fs
         .readdirSync(`./src/commands/${folder}`)
         .filter((file) => file.endsWith(".js"));
-      const { commads, commandArray } = client;
+      const { commands, commandArray } = client;
 
       for (const file of commandFiles) {
         const command = require(`../../commands/${folder}/${file}`);
-        commads.set(command.data.name, command);
+        commands.set(command.data.name, command);
         commandArray.push(command.data.toJSON());
       }
     }
