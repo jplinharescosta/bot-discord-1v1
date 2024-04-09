@@ -4,6 +4,16 @@ const { connect } = require("mongoose");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 
+const queues = {
+  AdmQueue: [],
+  GeneralQueue: [],
+  Queue1v1: [],
+  Queue2v2: [],
+  Queue3v3: [],
+  Queue4v4: [],
+  Queue5v5: [],
+};
+
 const client = new Client({
   intents: [
     GatewayIntentBits.GuildMessages,
