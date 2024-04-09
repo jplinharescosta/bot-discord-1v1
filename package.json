@@ -1,0 +1,15 @@
+{
+  "name": "discordbotfivem",
+  "version": "1.0.0",
+  "description": "ALPHA VERSION",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "src/bot.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1"
+  }
+}
