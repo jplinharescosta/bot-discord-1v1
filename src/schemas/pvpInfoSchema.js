@@ -7,6 +7,6 @@ const pvpInfoSchema = new Schema({
   Mode: { type: String, required: true },
 });
 
-const model = mongoose.model("KikitaDiscordBot", pvpInfoSchema, "pvpInfos");
-
-module.exports = model;
+module.exports =
+  mongoose.models.pvpInfos ||
+  mongoose.model("pvpInfos", pvpInfoSchema, "pvpInfos");

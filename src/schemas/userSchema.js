@@ -7,6 +7,6 @@ const userSchema = new Schema({
   DayProfit: { type: Number, default: 0 },
 });
 
-const model = mongoose.model("KikitaDiscordBot", pvpInfoSchema, "usersInfo");
-
-module.exports = model;
+module.exports =
+  mongoose.models.usersInfo ||
+  mongoose.model("usersInfo", pvpInfoSchema, "usersInfo");

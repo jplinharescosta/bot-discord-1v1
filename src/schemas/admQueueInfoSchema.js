@@ -4,10 +4,6 @@ const admQueueInfoSchema = new Schema({
   MessageID: { type: String, required: true },
 });
 
-const model = mongoose.model(
-  "KikitaDiscordBot",
-  admQueueInfoSchema,
-  "admQueueInfo"
-);
-
-module.exports = model;
+module.exports =
+  mongoose.models.admQueueInfo ||
+  mongoose.model("admQueueInfo", admQueueInfoSchema, "admQueueInfo");

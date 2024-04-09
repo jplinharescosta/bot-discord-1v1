@@ -1,4 +1,4 @@
-const pvpInfos = require("../../schemas/pvpInfoSchema");
+const pvpInfosSchema = require("../../schemas/pvpInfoSchema");
 const { EmbedBuilder } = require("discord.js");
 const { queues } = require("../../bot.js");
 
@@ -16,14 +16,14 @@ module.exports = {
   },
   async execute(interaction, client) {
     if (!interaction.isButton()) return;
-    // if (queues.AdmQueue.length == 0) {
-    //   return await interaction.reply({
-    //     content: "Não temos ADM online no momento!",
-    //     ephemeral: true,
-    //   });
-    // }
+    if (queues.AdmQueue.length == 0) {
+      return await interaction.reply({
+        content: "Não temos ADM online no momento!",
+        ephemeral: true,
+      });
+    }
     const interactionMessageId = interaction.message.id;
-    const pvpInfosGet = await pvpInfos.findOne({
+    const pvpInfosGet = await pvpInfosSchema.findOne({
       MessageID: interactionMessageId,
     });
     const gameMode = pvpInfosGet.Mode;

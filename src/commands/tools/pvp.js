@@ -6,7 +6,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 const mongoose = require("mongoose");
-const pvpInfoSchema = require("../../schemas/pvpInfoSchema");
+const pvpInfoSchemas = require("../../schemas/pvpInfoSchema.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -78,7 +78,7 @@ module.exports = {
       components: [buttons],
     });
 
-    const savePvpInfo = await pvpInfoSchema.create({
+    const savePvpInfo = await pvpInfoSchemas.create({
       ChatID: channelToSend.channel.id,
       MessageID: msg.id,
       Price: valor.value,
