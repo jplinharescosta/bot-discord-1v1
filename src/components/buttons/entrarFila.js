@@ -11,7 +11,7 @@ const {
 const { queues } = require("../../bot.js");
 const betOnGoing = require("../../schemas/betOnGoing.js");
 const confirmEmbedAndButtons = require("../../embeds/confirmEmbed.js");
-const { Mongoose } = require("mongoose");
+const admDataInfos = require("../../schemas/admDataInfos.js");
 
 function removeItemOnce(arr, value) {
   var index = arr.indexOf(value);
@@ -42,13 +42,17 @@ module.exports = {
       });
     }
 
-    const embed = interaction.message.embeds[0];
-    embed.fields[2] = {
+    const embedGetQueue = interaction.message.embeds[0];
+    embedGetQueue.fields[2] = {
       name: `💻 | Apostadores`,
       value: `${interaction.user}`,
       inline: false,
     };
-    await interaction.message.edit({ embeds: [embed] });
+
+    const embedGetQueueToSend = EmbedBuilder.from(embedGetQueue).setTimestamp();
+
+    await interaction.message.edit({ embeds: [embedGetQueueToSend] });
+
     queues.GeneralQueue.push(interaction.user.id);
 
     const pvpInfosGet = await pvpInfosSchema.findOne({
@@ -76,6 +80,14 @@ module.exports = {
     switch (gameMode) {
       case "1v1":
         if (queues[gameMode][betPrice].length == 2) {
+          const embedReset = interaction.message.embeds[0];
+          embedReset.fields[2] = {
+            name: `💻 | Apostadores`,
+            value: `Nenhum apostador na fila.`,
+            inline: false,
+          };
+          await interaction.message.edit({ embeds: [embedReset] });
+
           const players = queues[gameMode][betPrice].splice(0, 2);
           removeItemOnce(queues.GeneralQueue, players[0]);
           removeItemOnce(queues.GeneralQueue, players[1]);
@@ -115,8 +127,12 @@ module.exports = {
             ],
           });
 
+          const dataAdm = await admDataInfos.findOne({
+            UserId: adminRandom.id,
+          });
+
           const newChannelCreated = await newCategoryCreated.children.create({
-            name: `aposta-QTD-APOSTAS-ADM`,
+            name: `aposta-${dataAdm.ammountBets}`,
             type: ChannelType.GuildText,
             permissionOverwrites: [
               {
@@ -142,12 +158,12 @@ module.exports = {
             betId: id,
             Player1: player1.id,
             Player2: player2.id,
-            AMD: adminRandom.id,
+            ADM: adminRandom.id,
             Status: "",
             betPrice: pvpInfosGet.Price,
             createdTime: dataHoraBrasil,
           });
-          await betOnGoingNow.save().catch((err) => console.err(err));
+          await betOnGoingNow.save().catch((err) => console.error(err));
           // await interaction.editReply({
           //   content: `${newChannelCreated} `,
           //   ephemeral: true,

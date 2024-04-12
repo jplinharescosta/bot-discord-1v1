@@ -1,6 +1,7 @@
 const { EmbedBuilder, Colors } = require("discord.js");
 const { queues } = require("../../bot.js");
 const admQueueInfoSchema = require("../../schemas/admQueueInfoSchema.js");
+const admDataInfos = require("../../schemas/admDataInfos.js");
 
 module.exports = {
   data: {
@@ -8,6 +9,17 @@ module.exports = {
   },
   async execute(interaction, client) {
     if (!interaction.isButton()) return;
+
+    const dataAdm = await admDataInfos.findOne({
+      UserId: interaction.user.id,
+    });
+
+    if (!dataAdm) {
+      return interaction.reply({
+        content: `${interaction.user} você não está cadastrado no Banco de dados, entre em contato com algum supervisor.`,
+        ephemeral: true,
+      });
+    }
 
     if (queues.AdmQueue.includes(interaction.user.id)) {
       return await interaction.reply({

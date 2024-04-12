@@ -39,7 +39,10 @@ module.exports = {
       value: `Nenhum apostador na fila.`,
       inline: false,
     };
-    await interaction.message.edit({ embeds: [embed] });
+
+    const embedExitQueueToSend = EmbedBuilder.from(embed).setTimestamp();
+
+    await interaction.message.edit({ embeds: [embedExitQueueToSend] });
 
     const pvpInfosGet = await pvpInfos.findOne({
       MessageID: interaction.message.id,

@@ -72,7 +72,9 @@ module.exports = {
           inline: false,
         }
       )
-      .setThumbnail(thumbnail);
+      .setThumbnail(thumbnail)
+      .setFooter({ text: "Horário" })
+      .setTimestamp();
 
     const msg = await channelToSend.channel.send({
       embeds: [embed],
