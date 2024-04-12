@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { token, databaseToken, slaveToken } = process.env;
+const { token, databaseToken } = process.env;
 const { connect } = require("mongoose");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");

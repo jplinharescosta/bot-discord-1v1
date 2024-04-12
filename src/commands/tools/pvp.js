@@ -6,6 +6,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 const mongoose = require("mongoose");
+const { thumbnail } = process.env;
 const pvpInfoSchemas = require("../../schemas/pvpInfoSchema.js");
 
 module.exports = {
@@ -71,18 +72,23 @@ module.exports = {
           inline: false,
         }
       )
-      .setThumbnail(client.user.displayAvatarURL());
+      .setThumbnail(thumbnail);
 
     const msg = await channelToSend.channel.send({
       embeds: [embed],
       components: [buttons],
     });
 
+    const dataAtual = new Date();
+    const options = { timeZone: "America/Sao_Paulo" };
+    const dataHoraBrasil = dataAtual.toLocaleString("pt-BR", options);
+
     const savePvpInfo = await pvpInfoSchemas.create({
       ChatID: channelToSend.channel.id,
       MessageID: msg.id,
       Price: valor.value,
       Mode: modo.value,
+      createdTime: dataHoraBrasil,
     });
 
     await savePvpInfo.save().catch(console.error);

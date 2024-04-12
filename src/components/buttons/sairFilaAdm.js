@@ -35,21 +35,30 @@ module.exports = {
 
     string = string.replace("undefined", "");
 
-    const admQueueEmbedUpdate = new EmbedBuilder()
-      .setTitle("Fila de ADMs")
-      .addFields({
-        name: "Mediadores disponiveis",
-        value: `${string || "Nenhum mediador na fila."}`,
-      })
-      .setFooter({ text: "Todos os mediadores estão aleatorizados!" })
-      .setColor(Colors.Green)
-      .setThumbnail(client.user.displayAvatarURL());
+    // const admQueueEmbedUpdate = new EmbedBuilder()
+    //   .setTitle("Fila de ADMs")
+    //   .addFields({
+    //     name: "Mediadores disponiveis",
+    //     value: `${string || "Nenhum mediador na fila."}`,
+    //   })
+    //   .setFooter({ text: "Todos os mediadores estão aleatorizados!" })
+    //   .setColor(Colors.Green)
+    //   .setThumbnail(client.user.displayAvatarURL());
 
-    await interaction.message.fetch(interaction.message.id).then(async (msg) =>
-      msg.edit({
-        embeds: [admQueueEmbedUpdate],
-      })
-    );
+    const embed = interaction.message.embeds[0];
+    embed.fields[0] = {
+      name: "Mediadores disponiveis",
+      value: `${string || "Nenhum mediador na fila."}`,
+    };
+    await interaction.message.edit({
+      embeds: [embed],
+    });
+
+    // await interaction.message.fetch(interaction.message.id).then(async (msg) =>
+    //   msg.edit({
+    //     embeds: [admQueueEmbedUpdate],
+    //   })
+    // );
 
     await interaction.reply({
       content: `${interaction.user}, você saiu da fila de ADM.`,

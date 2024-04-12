@@ -5,6 +5,7 @@ const pvpInfoSchema = new Schema({
   CategoryID: { type: String, required: false },
   Price: { type: Number, required: true },
   Mode: { type: String, required: true },
+  createdTime: { type: String, required: true },
 });
 
 module.exports =
