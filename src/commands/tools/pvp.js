@@ -4,6 +4,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
+  PermissionFlagsBits,
 } = require("discord.js");
 const mongoose = require("mongoose");
 const { thumbnail } = process.env;
@@ -13,6 +14,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("pvp")
     .setDescription("Criar sala de pvp")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
       option
         .setName("modo")
@@ -54,11 +56,11 @@ module.exports = {
     );
 
     const embed = new EmbedBuilder()
-      .setTitle(`${modo.value} | Fila de Apostas`)
+      .setTitle(`${modo.value.split(" ")[0]} | Fila de Apostas`)
       .addFields(
         {
           name: `👤 | Modo de jogo`,
-          value: `${modo.value} Fivem`,
+          value: `${modo.value}`,
           inline: false,
         },
         {

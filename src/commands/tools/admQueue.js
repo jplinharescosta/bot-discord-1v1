@@ -4,15 +4,16 @@ const {
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
+  PermissionFlagsBits,
 } = require("discord.js");
 const { queues } = require("../../bot.js");
-const mongoose = require("mongoose");
 const admQueueInfoSchemas = require("../../schemas/admQueueInfoSchema.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("set-adm-queue")
     .setDescription("Criar sala queue para ADM")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addChannelOption((option) =>
       option
         .setName("canal")

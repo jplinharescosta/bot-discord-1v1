@@ -1,10 +1,11 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
 const admDataInfos = require("../../schemas/admDataInfos.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("del-adm-db")
     .setDescription("Apagar dados usuario ADM")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addUserOption((op) =>
       op
         .setName("user")
