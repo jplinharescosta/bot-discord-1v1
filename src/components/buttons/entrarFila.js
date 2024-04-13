@@ -7,11 +7,16 @@ const {
   PermissionFlagsBits,
   PermissionsBitField,
   permissionFlagsBits,
+  createMessageComponentCollector,
+  ComponentType,
+  ActionRowBuilder,
 } = require("discord.js");
 const { queues } = require("../../bot.js");
 const betOnGoing = require("../../schemas/betOnGoing.js");
+const inBetEmbedAndButtons = require("../../embeds/inBetEmbed.js");
 const confirmEmbedAndButtons = require("../../embeds/confirmEmbed.js");
 const admDataInfos = require("../../schemas/admDataInfos.js");
+const errorEmbed = require("../../embeds/errorEmbed.js");
 
 function removeItemOnce(arr, value) {
   var index = arr.indexOf(value);
@@ -19,6 +24,10 @@ function removeItemOnce(arr, value) {
     arr.splice(index, 1);
   }
   return arr;
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 module.exports = {
@@ -30,14 +39,18 @@ module.exports = {
 
     if (queues.AdmQueue.length == 0) {
       return await interaction.reply({
-        content: "Não temos ADM online no momento!",
+        embeds: [
+          errorEmbed(`${interaction.user}, não temos ADM online no momento!`),
+        ],
         ephemeral: true,
       });
     }
 
     if (queues.GeneralQueue.includes(interaction.user.id)) {
       return await interaction.reply({
-        content: "Você já está na em alguma fila!",
+        embeds: [
+          errorEmbed(`${interaction.user}, você já está na em alguma fila!`),
+        ],
         ephemeral: true,
       });
     }
@@ -58,13 +71,19 @@ module.exports = {
     const pvpInfosGet = await pvpInfosSchema.findOne({
       MessageID: interaction.message.id,
     });
-    const gameMode = pvpInfosGet.Mode;
-    const betPrice = pvpInfosGet.Price + "bet";
+    const gameMode = pvpInfosGet.Mode.split(" ")[0];
+    const fullGameMode = pvpInfosGet.Mode;
+    const betPrice = pvpInfosGet.Price + `bet`;
+    const chatId = pvpInfosGet.ChatID;
 
-    if (!queues[gameMode][betPrice]) {
-      queues[gameMode][betPrice] = [interaction.user.id];
+    if (!queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`]) {
+      queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`] = [
+        interaction.user.id,
+      ];
     } else {
-      queues[gameMode][betPrice].push(interaction.user.id);
+      queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`].push(
+        interaction.user.id
+      );
     }
 
     // const arrayLength = queues[gameMode][betPrice].push(interaction.user.id);
@@ -78,8 +97,11 @@ module.exports = {
 
     await interaction.deferUpdate();
     switch (gameMode) {
-      case "1v1":
-        if (queues[gameMode][betPrice].length == 2) {
+      case gameMode:
+        if (
+          queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`]
+            .length == 2
+        ) {
           const embedReset = interaction.message.embeds[0];
           embedReset.fields[2] = {
             name: `💻 | Apostadores`,
@@ -88,7 +110,9 @@ module.exports = {
           };
           await interaction.message.edit({ embeds: [embedReset] });
 
-          const players = queues[gameMode][betPrice].splice(0, 2);
+          const players = queues[gameMode][
+            `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
+          ].splice(0, 2);
           removeItemOnce(queues.GeneralQueue, players[0]);
           removeItemOnce(queues.GeneralQueue, players[1]);
           const player1 = await client.users.fetch(players[0]);
@@ -169,33 +193,110 @@ module.exports = {
           //   ephemeral: true,
           // });
           const { confirmEmbed, buttons } = confirmEmbedAndButtons(
-            gameMode,
+            fullGameMode,
             adminRandom,
             pvpInfosGet.Price,
             id
           );
-          await newChannelCreated.send({
+          const send = await newChannelCreated.send({
             content: `${player1} ${player2}`,
             embeds: [confirmEmbed],
             components: [buttons],
           });
+
+          const filter = (i) =>
+            i.user.id === player1.id || i.user.id === player2.id;
+
+          const collector = send.createMessageComponentCollector({
+            componentType: ComponentType.Button,
+            filter,
+          });
+
+          const { inBetEmbed, menu } = inBetEmbedAndButtons(
+            fullGameMode,
+            adminRandom,
+            pvpInfosGet.Price,
+            process.env.channel_value,
+            player1,
+            player2
+          );
+
+          queues.ConfirmationFase[id] = [];
+          collector.on("collect", async (i) => {
+            if (!i.isButton()) return;
+            if (i.customId === `confirmBet-${id}`) {
+              if (queues.ConfirmationFase[id].includes(i.user.id)) {
+                return i.reply({
+                  content: `${i.user} você já aceitou essa partida.`,
+                  ephemeral: true,
+                });
+              }
+              queues.ConfirmationFase[id].push(i.user.id);
+              console.log(queues.ConfirmationFase);
+
+              const componentToEdit = i.message.components[0];
+              componentToEdit.components[0].data.label = `Confirmar [${queues.ConfirmationFase[id].length}/2]`;
+
+              const componentToSend = ActionRowBuilder.from(componentToEdit);
+              await i.message.edit({
+                components: [componentToSend],
+              });
+            }
+            if (i.customId === `cancelBet-${id}`) {
+              if (queues.ConfirmationFase[id].includes(i.user.id)) {
+                return i.reply({
+                  content: `${i.user} você aceitou e não pode cancelar.`,
+                  ephemeral: true,
+                });
+              }
+              if (queues.ConfirmationFase[id]) {
+                delete queues.ConfirmationFase[id];
+              }
+              await i.channel.send({
+                embeds: [
+                  new EmbedBuilder().setDescription(
+                    `${i.user} cancelou a aposta, a sala fechará automaticamente em 5 segundos.`
+                  ),
+                ],
+              });
+
+              delay(5000).then(async () => {
+                await i.channel.parent.delete(); // CATEGORIA DO ADM... RETIRAR DEPOIS QUE CONFIGURAR
+                await i.channel.delete();
+              });
+            }
+
+            if (
+              queues.ConfirmationFase[id] &&
+              queues.ConfirmationFase[id].length === 2
+            ) {
+              await i.message.delete();
+
+              await i.channel.send({
+                content: `${player1}, ${player2}`,
+                embeds: [inBetEmbed],
+                components: [menu],
+              });
+            }
+            await i.deferUpdate();
+          });
         }
         break;
       case "2v2":
-        if (queues[gameMode][betPrice].length == 4) {
-          const players = queues[gameMode].splice(0, 4);
-          for (let i = 0; i <= players.length; i++) {
-            removeItemOnce(queues.GeneralQueue, players[i]);
-          }
-          const p1 = await client.users.fetch(players[0]);
-          const p2 = await client.users.fetch(players[1]);
-          const p3 = await client.users.fetch(players[2]);
-          const p4 = await client.users.fetch(players[3]);
-          console.log("PLAYER 1 -> ", p1);
-          console.log("PLAYER 2 -> ", p2);
-          console.log("PLAYER 3 -> ", p3);
-          console.log("PLAYER 4 -> ", p4);
-        }
+        // if (queues[gameMode][betPrice].length == 4) {
+        //   const players = queues[gameMode].splice(0, 4);
+        //   for (let i = 0; i <= players.length; i++) {
+        //     removeItemOnce(queues.GeneralQueue, players[i]);
+        //   }
+        //   const p1 = await client.users.fetch(players[0]);
+        //   const p2 = await client.users.fetch(players[1]);
+        //   const p3 = await client.users.fetch(players[2]);
+        //   const p4 = await client.users.fetch(players[3]);
+        //   console.log("PLAYER 1 -> ", p1);
+        //   console.log("PLAYER 2 -> ", p2);
+        //   console.log("PLAYER 3 -> ", p3);
+        //   console.log("PLAYER 4 -> ", p4);
+        // }
         break;
       default:
         break;

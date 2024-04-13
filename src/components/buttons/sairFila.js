@@ -1,6 +1,7 @@
 const pvpInfos = require("../../schemas/pvpInfoSchema");
 const { EmbedBuilder } = require("discord.js");
 const { queues } = require("../../bot.js");
+const errorEmbed = require("../../embeds/errorEmbed.js");
 
 function removeItemOnce(arr, value) {
   var index = arr.indexOf(value);
@@ -16,9 +17,14 @@ module.exports = {
   },
   async execute(interaction, client) {
     if (!interaction.isButton()) return;
+
+    const errorEmbedMessage = errorEmbed(
+      `${interaction.user}, você não pode sair de uma fila que não está.`
+    );
+
     if (!queues.GeneralQueue.includes(interaction.user.id)) {
       return await interaction.reply({
-        content: "Você não está em nenhuma fila!",
+        embeds: [errorEmbedMessage],
         ephemeral: true,
       });
     }
@@ -47,10 +53,14 @@ module.exports = {
     const pvpInfosGet = await pvpInfos.findOne({
       MessageID: interaction.message.id,
     });
-    const gameMode = pvpInfosGet.Mode;
+    const gameMode = pvpInfosGet.Mode.split(" ")[0];
     const betPrice = pvpInfosGet.Price + "bet";
+    const chatId = pvpInfosGet.ChatID;
 
-    removeItemOnce(queues[gameMode][betPrice], interaction.user.id);
+    removeItemOnce(
+      queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`],
+      interaction.user.id
+    );
     removeItemOnce(queues.GeneralQueue, interaction.user.id);
 
     await interaction.deferUpdate();
