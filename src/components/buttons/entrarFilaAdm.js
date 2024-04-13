@@ -64,9 +64,6 @@ module.exports = {
     //   })
     // );
 
-    await interaction.reply({
-      content: `${interaction.user}, você entrou na fila de ADM.`,
-      ephemeral: true,
-    });
+    await interaction.deferUpdate();
   },
 };
