@@ -8,6 +8,7 @@ module.exports = {
   queues: {
     AdmQueue: [],
     GeneralQueue: [],
+    ConfirmationFase: {},
     "1v1": [],
     "2v2": [],
     "3v3": [],
