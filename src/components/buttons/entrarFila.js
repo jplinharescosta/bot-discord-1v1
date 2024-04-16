@@ -67,6 +67,7 @@ module.exports = {
     await interaction.message.edit({ embeds: [embedGetQueueToSend] });
 
     queues.GeneralQueue.push(interaction.user.id);
+    console.log("MESSAGE ID ->", interaction.message.id);
 
     const pvpInfosGet = await pvpInfosSchema.findOne({
       MessageID: interaction.message.id,
@@ -74,7 +75,7 @@ module.exports = {
     const gameMode = pvpInfosGet.Mode.split(" ")[0];
     const fullGameMode = pvpInfosGet.Mode;
     const betPrice = pvpInfosGet.Price + `bet`;
-    const chatId = pvpInfosGet.ChatID;
+    const chatId = pvpInfosGet.MessageID;
 
     if (!queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`]) {
       queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`] = [
@@ -218,7 +219,8 @@ module.exports = {
             pvpInfosGet.Price,
             process.env.channel_value,
             player1,
-            player2
+            player2,
+            id
           );
 
           queues.ConfirmationFase[id] = [];
@@ -281,22 +283,6 @@ module.exports = {
             await i.deferUpdate();
           });
         }
-        break;
-      case "2v2":
-        // if (queues[gameMode][betPrice].length == 4) {
-        //   const players = queues[gameMode].splice(0, 4);
-        //   for (let i = 0; i <= players.length; i++) {
-        //     removeItemOnce(queues.GeneralQueue, players[i]);
-        //   }
-        //   const p1 = await client.users.fetch(players[0]);
-        //   const p2 = await client.users.fetch(players[1]);
-        //   const p3 = await client.users.fetch(players[2]);
-        //   const p4 = await client.users.fetch(players[3]);
-        //   console.log("PLAYER 1 -> ", p1);
-        //   console.log("PLAYER 2 -> ", p2);
-        //   console.log("PLAYER 3 -> ", p3);
-        //   console.log("PLAYER 4 -> ", p4);
-        // }
         break;
       default:
         break;

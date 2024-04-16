@@ -55,7 +55,7 @@ module.exports = {
     });
     const gameMode = pvpInfosGet.Mode.split(" ")[0];
     const betPrice = pvpInfosGet.Price + "bet";
-    const chatId = pvpInfosGet.ChatID;
+    const chatId = pvpInfosGet.MessageID;
 
     removeItemOnce(
       queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`],

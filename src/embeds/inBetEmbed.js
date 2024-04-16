@@ -1,8 +1,6 @@
 const {
   EmbedBuilder,
-  ButtonBuilder,
   ActionRowBuilder,
-  ButtonStyle,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } = require("discord.js");
@@ -13,10 +11,11 @@ const inBetEmbedAndButtons = (
   betValue,
   roomValue,
   player1,
-  player2
+  player2,
+  id
 ) => {
   const inBetEmbed = new EmbedBuilder()
-    .setTitle(`${format} - FIVEM`)
+    .setTitle(`${format}`)
     .addFields({
       name: "Valor",
       value: `R$ ${betValue},00`,
@@ -47,10 +46,10 @@ const inBetEmbedAndButtons = (
     .addOptions(
       new StringSelectMenuOptionBuilder()
         .setLabel("🪧 Finalizar Aposta")
-        .setValue("end-up-bet"),
+        .setValue(`${id}_end-up-bet`),
       new StringSelectMenuOptionBuilder()
         .setLabel("🎲 Definir Vencedor")
-        .setValue("in-bet-pick-winner")
+        .setValue(`${id}_in-bet-pick-winner`)
     );
 
   const menu = new ActionRowBuilder().addComponents(selectMenu);

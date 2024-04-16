@@ -8,6 +8,7 @@ const {
 } = require("discord.js");
 const { queues } = require("../../bot.js");
 const admQueueInfoSchemas = require("../../schemas/admQueueInfoSchema.js");
+const { thumbnail } = process.env;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -50,6 +51,7 @@ module.exports = {
         name: "Mediadores disponiveis",
         value: `Nenhum mediador na fila.`,
       })
+      .setThumbnail(thumbnail)
       .setFooter({ text: "Todos os mediadores estão aleatorizados!" });
 
     const buttons = new ActionRowBuilder().addComponents(

@@ -1,5 +1,5 @@
 const { Schema, default: mongoose } = require("mongoose");
-const userSchema = new Schema({
+const userDataSchema = new Schema({
   UserID: { type: String, required: true },
   Win: { type: Number, default: 0 },
   Loss: { type: Number, default: 0 },
@@ -8,5 +8,5 @@ const userSchema = new Schema({
 });
 
 module.exports =
-  mongoose.models.usersInfo ||
-  mongoose.model("usersInfo", pvpInfoSchema, "usersInfo");
+  mongoose.models.userDataSchema ||
+  mongoose.model("userData", userDataSchema, "userData");
