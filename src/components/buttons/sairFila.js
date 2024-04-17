@@ -48,8 +48,8 @@ module.exports = {
 
     const embedExitQueueToSend = EmbedBuilder.from(embed).setTimestamp();
 
-    await interaction.message.edit({ embeds: [embedExitQueueToSend] });
-
+    //await interaction.deferUpdate();
+    await interaction.update({ embeds: [embedExitQueueToSend] });
     const pvpInfosGet = await pvpInfos.findOne({
       MessageID: interaction.message.id,
     });
@@ -63,6 +63,6 @@ module.exports = {
     );
     removeItemOnce(queues.GeneralQueue, interaction.user.id);
 
-    await interaction.deferUpdate();
+    // await interaction.deferUpdate();
   },
 };

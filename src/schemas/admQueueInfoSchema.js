@@ -5,5 +5,5 @@ const admQueueInfoSchema = new Schema({
 });
 
 module.exports =
-  mongoose.models.admQueueInfo ||
+  mongoose.models.admQueueInfoSchema ||
   mongoose.model("admQueueInfo", admQueueInfoSchema, "admQueueInfo");

@@ -2,7 +2,7 @@ const { Schema, default: mongoose } = require("mongoose");
 const admDataInfos = new Schema({
   UserId: { type: String, required: true },
   ammountBets: { type: Number, default: 0 },
-  categoryId: { type: String, default: "" },
+  categoryId: { type: String, required: true },
   registeredDate: String,
 });
 

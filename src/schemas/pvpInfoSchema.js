@@ -9,5 +9,5 @@ const pvpInfoSchema = new Schema({
 });
 
 module.exports =
-  mongoose.models.pvpInfos ||
+  mongoose.models.pvpInfoSchema ||
   mongoose.model("pvpInfos", pvpInfoSchema, "pvpInfos");

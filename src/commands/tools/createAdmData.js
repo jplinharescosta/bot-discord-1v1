@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const {
+  SlashCommandBuilder,
+  PermissionFlagsBits,
+  ChannelType,
+  PermissionsBitField,
+} = require("discord.js");
 const admDataInfos = require("../../schemas/admDataInfos.js");
 
 module.exports = {
@@ -29,8 +34,20 @@ module.exports = {
 
     const dataHoraBrasil = dataAtual.toLocaleString("pt-BR", options);
 
+    const newCategoryCreated = await interaction.guild.channels.create({
+      name: `${user.username.toUpperCase()} | ${process.env.org_name}`,
+      type: ChannelType.GuildCategory,
+      permissionOverwrites: [
+        {
+          id: interaction.guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel],
+        },
+      ],
+    });
+
     const AddUserDB = await admDataInfos.create({
       UserId: user.id,
+      categoryId: newCategoryCreated.id,
       registeredDate: dataHoraBrasil,
     });
 

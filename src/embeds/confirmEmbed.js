@@ -35,7 +35,7 @@ const confirmEmbedAndButtons = (format, adm, betValue, betId) => {
     style: ButtonStyle.Success,
   });
   const cancelButton = new ButtonBuilder({
-    custom_id: `cancelBet-${betId}`,
+    custom_id: `cancelBet`,
     label: "Cancelar",
     style: ButtonStyle.Danger,
   });

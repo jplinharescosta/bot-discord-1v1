@@ -64,10 +64,9 @@ module.exports = {
 
     const embedGetQueueToSend = EmbedBuilder.from(embedGetQueue).setTimestamp();
 
-    await interaction.message.edit({ embeds: [embedGetQueueToSend] });
-
+    //await interaction.deferUpdate();
+    await interaction.update({ embeds: [embedGetQueueToSend] });
     queues.GeneralQueue.push(interaction.user.id);
-    console.log("MESSAGE ID ->", interaction.message.id);
 
     const pvpInfosGet = await pvpInfosSchema.findOne({
       MessageID: interaction.message.id,
@@ -87,16 +86,11 @@ module.exports = {
       );
     }
 
-    // const arrayLength = queues[gameMode][betPrice].push(interaction.user.id);
-    console.log(`Array Length - Queue${gameMode}`, queues.GeneralQueue.length);
-    console.log("General Queue ->", queues.GeneralQueue);
-    console.log("GameMode Queue -> ", queues[gameMode]);
-
     const dataAtual = new Date();
     const options = { timeZone: "America/Sao_Paulo" };
     const dataHoraBrasil = dataAtual.toLocaleString("pt-BR", options);
 
-    await interaction.deferUpdate();
+    //await interaction.deferUpdate();
     switch (gameMode) {
       case gameMode:
         if (
@@ -109,6 +103,7 @@ module.exports = {
             value: `Nenhum apostador na fila.`,
             inline: false,
           };
+
           await interaction.message.edit({ embeds: [embedReset] });
 
           const players = queues[gameMode][
@@ -116,83 +111,62 @@ module.exports = {
           ].splice(0, 2);
           removeItemOnce(queues.GeneralQueue, players[0]);
           removeItemOnce(queues.GeneralQueue, players[1]);
-          const player1 = await client.users.fetch(players[0]);
-          const player2 = await client.users.fetch(players[1]);
-          console.log("PLAYER 1 -> ", player1.id);
-          console.log("PLAYER 2 -> ", player2.id);
 
           // const randomADM = Math.floor(Math.random * queues.AdmQueue.length);
-          const adminRandom = await client.users.fetch(
-            queues.AdmQueue[(Math.random() * queues.AdmQueue.length) | 0]
-          );
-          console.log(adminRandom);
+          const copyAdm = [...queues.AdmQueue];
+          const randomElement = copyAdm.sort(() => 0.5 - Math.random())[0];
+          //const index = Math.floor(Math.random() * queues.AdmQueue.length);
+          const adminRandom = await client.users.fetch(randomElement);
 
-          const newCategoryCreated = await interaction.guild.channels.create({
-            name: `${adminRandom.username.toUpperCase()} | ${
-              process.env.org_name
-            }`,
-            type: ChannelType.GuildCategory,
-            permissionOverwrites: [
-              {
-                id: interaction.guild.roles.everyone,
-                deny: [PermissionFlagsBits.ViewChannel],
-              },
-              {
-                id: player1.id,
-                allow: [PermissionFlagsBits.ViewChannel],
-              },
-              {
-                id: player2.id,
-                allow: [PermissionFlagsBits.ViewChannel],
-              },
-              {
-                id: adminRandom.id,
-                allow: [PermissionFlagsBits.ViewChannel],
-              },
-            ],
-          });
-
-          const dataAdm = await admDataInfos.findOne({
+          const admData = await admDataInfos.findOne({
             UserId: adminRandom.id,
           });
 
-          const newChannelCreated = await newCategoryCreated.children.create({
-            name: `aposta-${dataAdm.ammountBets}`,
+          const categoryAdm = await interaction.guild.channels.cache.get(
+            admData.categoryId
+          );
+
+          const player1 = await client.users.fetch(players[0]);
+          const player2 = await client.users.fetch(players[1]);
+
+          const newChannelCreated = await interaction.guild.channels.create({
+            name: `aposta-aguardando`,
             type: ChannelType.GuildText,
+            parent: categoryAdm,
             permissionOverwrites: [
               {
-                id: interaction.guild.roles.everyone,
-                deny: [PermissionFlagsBits.ViewChannel],
+                id: interaction.guild.id,
+                deny: [PermissionsBitField.Flags.ViewChannel],
               },
               {
                 id: player1.id,
-                allow: [PermissionFlagsBits.ViewChannel],
+                allow: [
+                  PermissionsBitField.Flags.ViewChannel,
+                  PermissionsBitField.Flags.SendMessages,
+                  PermissionsBitField.Flags.ReadMessageHistory,
+                ],
               },
               {
                 id: player2.id,
-                allow: [PermissionFlagsBits.ViewChannel],
+                allow: [
+                  PermissionsBitField.Flags.ViewChannel,
+                  PermissionsBitField.Flags.SendMessages,
+                  PermissionsBitField.Flags.ReadMessageHistory,
+                ],
               },
               {
                 id: adminRandom.id,
-                allow: [PermissionFlagsBits.ViewChannel],
+                allow: [
+                  PermissionsBitField.Flags.ViewChannel,
+                  PermissionsBitField.Flags.SendMessages,
+                  PermissionsBitField.Flags.ReadMessageHistory,
+                ],
               },
             ],
           });
-          let id = Math.random().toString(16).slice(2);
-          const betOnGoingNow = await betOnGoing.create({
-            betId: id,
-            Player1: player1.id,
-            Player2: player2.id,
-            ADM: adminRandom.id,
-            Status: "",
-            betPrice: pvpInfosGet.Price,
-            createdTime: dataHoraBrasil,
-          });
-          await betOnGoingNow.save().catch((err) => console.error(err));
-          // await interaction.editReply({
-          //   content: `${newChannelCreated} `,
-          //   ephemeral: true,
-          // });
+
+          let id = Math.random().toString(16).slice(2); //IMPORNTANTE
+
           const { confirmEmbed, buttons } = confirmEmbedAndButtons(
             fullGameMode,
             adminRandom,
@@ -204,6 +178,8 @@ module.exports = {
             embeds: [confirmEmbed],
             components: [buttons],
           });
+
+          //COLLECTOR A PARTIR DAQUI
 
           const filter = (i) =>
             i.user.id === player1.id || i.user.id === player2.id;
@@ -233,18 +209,18 @@ module.exports = {
                   ephemeral: true,
                 });
               }
+
               queues.ConfirmationFase[id].push(i.user.id);
-              console.log(queues.ConfirmationFase);
 
               const componentToEdit = i.message.components[0];
               componentToEdit.components[0].data.label = `Confirmar [${queues.ConfirmationFase[id].length}/2]`;
 
               const componentToSend = ActionRowBuilder.from(componentToEdit);
-              await i.message.edit({
+              await i.update({
                 components: [componentToSend],
               });
             }
-            if (i.customId === `cancelBet-${id}`) {
+            if (i.customId === `cancelBet`) {
               if (queues.ConfirmationFase[id].includes(i.user.id)) {
                 return i.reply({
                   content: `${i.user} você aceitou e não pode cancelar.`,
@@ -254,7 +230,7 @@ module.exports = {
               if (queues.ConfirmationFase[id]) {
                 delete queues.ConfirmationFase[id];
               }
-              await i.channel.send({
+              await i.reply({
                 embeds: [
                   new EmbedBuilder().setDescription(
                     `${i.user} cancelou a aposta, a sala fechará automaticamente em 5 segundos.`
@@ -263,15 +239,34 @@ module.exports = {
               });
 
               delay(5000).then(async () => {
-                await i.channel.parent.delete(); // CATEGORIA DO ADM... RETIRAR DEPOIS QUE CONFIGURAR
                 await i.channel.delete();
               });
             }
-
+            // BOTH CONFIRM THE BET
             if (
               queues.ConfirmationFase[id] &&
               queues.ConfirmationFase[id].length === 2
             ) {
+              await betOnGoing.create({
+                betId: id,
+                Format: fullGameMode,
+                bettors: {
+                  Player1: {
+                    id: player1.id,
+                  },
+                  Player2: {
+                    id: player2.id,
+                  },
+                },
+                ADM: adminRandom.id,
+                betPrice: pvpInfosGet.Price,
+                createdTime: dataHoraBrasil,
+              });
+
+              await newChannelCreated.edit({
+                name: `aposta-${admData.ammountBets}`,
+              });
+
               await i.message.delete();
 
               await i.channel.send({
@@ -280,21 +275,11 @@ module.exports = {
                 components: [menu],
               });
             }
-            await i.deferUpdate();
           });
         }
         break;
       default:
         break;
-      // if (arrayLength == 2) {
-      //   const players = queues[gameMode].splice(0, 2);
-      //   removeItemOnce(queues.GeneralQueue, players[0]);
-      //   removeItemOnce(queues.GeneralQueue, players[1]);
-      //   const p1 = client.users.fetch(players[0]);
-      //   const p2 = client.users.fetch(players[1]);
-      //   console.log("PLAYER 1 -> ", p1);
-      //   console.log("PLAYER 2 -> ", p2);
-      // }
     }
   },
 };

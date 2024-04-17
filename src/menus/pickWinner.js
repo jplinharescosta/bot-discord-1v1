@@ -10,8 +10,8 @@ const pickWinnerMenu = async (id, client) => {
   const betData = await betOnGoing.findOne({
     betId: id,
   });
-  const p1 = await client.users.fetch(betData.Player1);
-  const p2 = await client.users.fetch(betData.Player2);
+  const p1 = await client.users.fetch(betData.bettors.Player1.id);
+  const p2 = await client.users.fetch(betData.bettors.Player2.id);
   const adm = await client.users.fetch(betData.ADM);
 
   const pickWinnerEmbed = new EmbedBuilder()

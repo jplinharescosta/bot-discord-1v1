@@ -54,7 +54,7 @@ module.exports = {
       name: "Mediadores disponiveis",
       value: `${string || "Nenhum mediador na fila."}`,
     };
-    await interaction.message.edit({
+    await interaction.update({
       embeds: [embed],
     });
 
@@ -64,6 +64,6 @@ module.exports = {
     //   })
     // );
 
-    await interaction.deferUpdate();
+    //await interaction.deferUpdate();
   },
 };
