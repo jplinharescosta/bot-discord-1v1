@@ -6,7 +6,7 @@ const {
   EmbedBuilder,
   PermissionFlagsBits,
 } = require("discord.js");
-const { queues } = require("../../bot.js");
+//const { queues } = require("../../bot.js");
 const admQueueInfoSchemas = require("../../schemas/admQueueInfoSchema.js");
 const { thumbnail } = process.env;
 
@@ -35,13 +35,13 @@ module.exports = {
       style: ButtonStyle.Danger,
     });
 
-    let string;
-    let num = 1;
-    await queues.AdmQueue.forEach(async (value) => {
-      let adm = client.users.fetch(value);
-      string += `${num} - ${adm.user}\n`;
-      num++;
-    });
+    // let string;
+    // let num = 1;
+    // await queues.AdmQueue.forEach(async (value) => {
+    //   let adm = client.users.fetch(value);
+    //   string += `${num} - ${adm.user}\n`;
+    //   num++;
+    // });
 
     // string = string.replace(undefined, "");
 

@@ -3,6 +3,8 @@ const { Schema, default: mongoose, Types } = require("mongoose");
 const betOnGoingData = new Schema({
   betId: String,
   Format: String,
+  Channel: String,
+  ChannelNumber: String,
   bettors: {
     Player1: {
       id: String,

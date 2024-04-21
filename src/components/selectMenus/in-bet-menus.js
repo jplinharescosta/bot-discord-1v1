@@ -7,6 +7,8 @@ const admDataInfos = require("../../schemas/admDataInfos.js");
 const { EmbedBuilder } = require("discord.js");
 const { adm_role_id } = process.env;
 
+const userDataSchema = require("../../schemas/userSchema.js");
+
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -34,9 +36,6 @@ module.exports = {
     });
     const p1 = await client.users.fetch(betData.bettors.Player1.id);
     const p2 = await client.users.fetch(betData.bettors.Player2.id);
-    const dataAdm = await admDataInfos.findOne({
-      UserId: interaction.user.id,
-    });
 
     const { auxEmbed, menuUpdate, rulesButton } = updateInBetMenu(id);
 
@@ -50,6 +49,7 @@ module.exports = {
         //interaction.deferUpdate();
         break;
       case "end-up-bet":
+        // UPDATE END DATE IN BET
         const dataAtual = new Date();
         const options = { timeZone: "America/Sao_Paulo" };
         const dataHoraBrasil = dataAtual.toLocaleString("pt-BR", options);
@@ -61,6 +61,44 @@ module.exports = {
           {
             Status: "ended",
             endTime: dataHoraBrasil,
+          }
+        );
+        // UPDATE END DATE IN BET
+
+        let userDataPlayer1 = await userDataSchema.findOne({
+          UserID: betData.bettors.Player1.id,
+        });
+        let userDataPlayer2 = await userDataSchema.findOne({
+          UserID: betData.bettors.Player2.id,
+        });
+
+        if (!userDataPlayer1) {
+          userDataPlayer1 = await userDataSchema.create({
+            UserID: betData.bettors.Player1.id,
+          });
+        }
+        if (!userDataPlayer2) {
+          userDataPlayer2 = await userDataSchema.create({
+            UserID: betData.bettors.Player2.id,
+          });
+        }
+
+        await userDataSchema.findOneAndUpdate(
+          {
+            UserID: betData.bettors.Player1.id,
+          },
+          {
+            Win: userDataPlayer1.Win + betData.bettors.Player1.win,
+            Loss: userDataPlayer1.Loss + betData.bettors.Player1.lose,
+          }
+        );
+        await userDataSchema.findOneAndUpdate(
+          {
+            UserID: betData.bettors.Player2.id,
+          },
+          {
+            Win: userDataPlayer2.Win + betData.bettors.Player2.win,
+            Loss: userDataPlayer2.Loss + betData.bettors.Player2.lose,
           }
         );
 
@@ -89,14 +127,6 @@ module.exports = {
           embeds: [auxEmbed],
           components: [menuUpdate, rulesButton],
         });
-
-        // UPDATE DATABASE - AMMOUNT BETS ADM
-        await admDataInfos.findOneAndUpdate(
-          {
-            UserId: interaction.user.id,
-          },
-          { ammountBets: dataAdm.ammountBets + 1 }
-        );
 
         // UPDATE DATABASE - USER
         await betOnGoing.findOneAndUpdate(
@@ -131,14 +161,6 @@ module.exports = {
           embeds: [auxEmbed],
           components: [menuUpdate, rulesButton],
         });
-
-        // UPDATE DATABASE - AMMOUNT BETS ADM
-        await admDataInfos.findOneAndUpdate(
-          {
-            UserId: interaction.user.id,
-          },
-          { ammountBets: dataAdm.ammountBets + 1 }
-        );
 
         // UPDATE DATABASE - USER
         await betOnGoing.findOneAndUpdate(

@@ -5,7 +5,7 @@
   "main": "src/bot.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node ."
+    "start": "node --trace-warnings ."
   },
   "author": "",
   "license": "ISC",

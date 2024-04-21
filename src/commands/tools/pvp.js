@@ -6,7 +6,6 @@ const {
   EmbedBuilder,
   PermissionFlagsBits,
 } = require("discord.js");
-const mongoose = require("mongoose");
 const { thumbnail } = process.env;
 const pvpInfoSchemas = require("../../schemas/pvpInfoSchema.js");
 
@@ -94,8 +93,6 @@ module.exports = {
       Mode: modo.value,
       createdTime: dataHoraBrasil,
     });
-
-    await savePvpInfo.save().catch(console.error);
 
     await interaction.reply({
       content: `Sala PVP criada com sucesso em -> ${channelToSend.channel}`,

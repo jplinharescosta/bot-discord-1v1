@@ -1,30 +1,22 @@
 const pvpInfosSchema = require("../../schemas/pvpInfoSchema");
 const {
   EmbedBuilder,
-  ButtonBuilder,
   ChannelType,
-  PermissionOverwrites,
-  PermissionFlagsBits,
   PermissionsBitField,
-  permissionFlagsBits,
-  createMessageComponentCollector,
   ComponentType,
   ActionRowBuilder,
 } = require("discord.js");
-const { queues } = require("../../bot.js");
+
 const betOnGoing = require("../../schemas/betOnGoing.js");
 const inBetEmbedAndButtons = require("../../embeds/inBetEmbed.js");
 const confirmEmbedAndButtons = require("../../embeds/confirmEmbed.js");
 const admDataInfos = require("../../schemas/admDataInfos.js");
 const errorEmbed = require("../../embeds/errorEmbed.js");
-
-function removeItemOnce(arr, value) {
-  var index = arr.indexOf(value);
-  if (index > -1) {
-    arr.splice(index, 1);
-  }
-  return arr;
-}
+const {
+  queueManager,
+  admQueueManager,
+  confirmationFaseQueue,
+} = require("../../bot.js");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,7 +29,7 @@ module.exports = {
   async execute(interaction, client) {
     if (!interaction.isButton()) return;
 
-    if (queues.AdmQueue.length == 0) {
+    if (admQueueManager.countTotalUsers() === 0) {
       return await interaction.reply({
         embeds: [
           errorEmbed(`${interaction.user}, não temos ADM online no momento!`),
@@ -46,7 +38,7 @@ module.exports = {
       });
     }
 
-    if (queues.GeneralQueue.includes(interaction.user.id)) {
+    if (queueManager.isUserInAnyQueue(interaction.user.id)) {
       return await interaction.reply({
         embeds: [
           errorEmbed(`${interaction.user}, você já está na em alguma fila!`),
@@ -64,9 +56,7 @@ module.exports = {
 
     const embedGetQueueToSend = EmbedBuilder.from(embedGetQueue).setTimestamp();
 
-    //await interaction.deferUpdate();
     await interaction.update({ embeds: [embedGetQueueToSend] });
-    queues.GeneralQueue.push(interaction.user.id);
 
     const pvpInfosGet = await pvpInfosSchema.findOne({
       MessageID: interaction.message.id,
@@ -76,15 +66,10 @@ module.exports = {
     const betPrice = pvpInfosGet.Price + `bet`;
     const chatId = pvpInfosGet.MessageID;
 
-    if (!queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`]) {
-      queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`] = [
-        interaction.user.id,
-      ];
-    } else {
-      queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`].push(
-        interaction.user.id
-      );
-    }
+    queueManager.addUserToQueue(
+      interaction.user.id,
+      `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
+    );
 
     const dataAtual = new Date();
     const options = { timeZone: "America/Sao_Paulo" };
@@ -94,7 +79,7 @@ module.exports = {
     switch (gameMode) {
       case gameMode:
         if (
-          queues[gameMode][`${betPrice}-${pvpInfosGet.Mode}-${chatId}`]
+          queueManager.queues[`${betPrice}-${pvpInfosGet.Mode}-${chatId}`]
             .length == 2
         ) {
           const embedReset = interaction.message.embeds[0];
@@ -106,16 +91,22 @@ module.exports = {
 
           await interaction.message.edit({ embeds: [embedReset] });
 
-          const players = queues[gameMode][
+          const players = queueManager.queues[
             `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
           ].splice(0, 2);
-          removeItemOnce(queues.GeneralQueue, players[0]);
-          removeItemOnce(queues.GeneralQueue, players[1]);
 
-          // const randomADM = Math.floor(Math.random * queues.AdmQueue.length);
-          const copyAdm = [...queues.AdmQueue];
+          queueManager.removeUserFromQueue(
+            players[0],
+            `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
+          );
+          queueManager.removeUserFromQueue(
+            players[1],
+            `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
+          );
+
+          const copyAdm = [...admQueueManager.queues["admQueue"]];
           const randomElement = copyAdm.sort(() => 0.5 - Math.random())[0];
-          //const index = Math.floor(Math.random() * queues.AdmQueue.length);
+
           const adminRandom = await client.users.fetch(randomElement);
 
           const admData = await admDataInfos.findOne({
@@ -165,7 +156,7 @@ module.exports = {
             ],
           });
 
-          let id = Math.random().toString(16).slice(2); //IMPORNTANTE
+          let id = Math.random().toString(16).slice(2); //IMPORTANT
 
           const { confirmEmbed, buttons } = confirmEmbedAndButtons(
             fullGameMode,
@@ -179,15 +170,19 @@ module.exports = {
             components: [buttons],
           });
 
+          const adm = await admDataInfos.findOne({ UserId: adminRandom.id });
+
+          await admDataInfos.findOneAndUpdate(
+            {
+              UserId: adminRandom.id,
+            },
+            { ammountBets: adm.ammountBets + 1 }
+          );
+
           //COLLECTOR A PARTIR DAQUI
 
           const filter = (i) =>
             i.user.id === player1.id || i.user.id === player2.id;
-
-          const collector = send.createMessageComponentCollector({
-            componentType: ComponentType.Button,
-            filter,
-          });
 
           const { inBetEmbed, menu } = inBetEmbedAndButtons(
             fullGameMode,
@@ -199,21 +194,40 @@ module.exports = {
             id
           );
 
-          queues.ConfirmationFase[id] = [];
+          const time = 180_000;
+          const collector = send.createMessageComponentCollector({
+            componentType: ComponentType.Button,
+            filter,
+            time,
+          });
+
           collector.on("collect", async (i) => {
             if (!i.isButton()) return;
             if (i.customId === `confirmBet-${id}`) {
-              if (queues.ConfirmationFase[id].includes(i.user.id)) {
+              collector.resetTimer();
+
+              if (
+                confirmationFaseQueue.isUserInQueue(
+                  i.user.id,
+                  `ConfirmationFase${id}`
+                )
+              ) {
                 return i.reply({
                   content: `${i.user} você já aceitou essa partida.`,
                   ephemeral: true,
                 });
               }
 
-              queues.ConfirmationFase[id].push(i.user.id);
+              confirmationFaseQueue.addUserToQueue(
+                i.user.id,
+                `ConfirmationFase${id}`
+              );
 
               const componentToEdit = i.message.components[0];
-              componentToEdit.components[0].data.label = `Confirmar [${queues.ConfirmationFase[id].length}/2]`;
+
+              componentToEdit.components[0].data.label = `Confirmar [${
+                confirmationFaseQueue.queues[`ConfirmationFase${id}`].length
+              }/2]`;
 
               const componentToSend = ActionRowBuilder.from(componentToEdit);
               await i.update({
@@ -221,15 +235,20 @@ module.exports = {
               });
             }
             if (i.customId === `cancelBet`) {
-              if (queues.ConfirmationFase[id].includes(i.user.id)) {
+              if (
+                confirmationFaseQueue.isUserInQueue(
+                  i.user.id,
+                  `ConfirmationFase${id}`
+                )
+              ) {
                 return i.reply({
                   content: `${i.user} você aceitou e não pode cancelar.`,
                   ephemeral: true,
                 });
               }
-              if (queues.ConfirmationFase[id]) {
-                delete queues.ConfirmationFase[id];
-              }
+
+              confirmationFaseQueue.deleteQueue(`ConfirmationFase${id}`);
+
               await i.reply({
                 embeds: [
                   new EmbedBuilder().setDescription(
@@ -243,13 +262,17 @@ module.exports = {
               });
             }
             // BOTH CONFIRM THE BET
+
             if (
-              queues.ConfirmationFase[id] &&
-              queues.ConfirmationFase[id].length === 2
+              confirmationFaseQueue.countUsersInQueue(
+                `ConfirmationFase${id}`
+              ) === 2
             ) {
               await betOnGoing.create({
                 betId: id,
                 Format: fullGameMode,
+                Channel: newChannelCreated.id,
+                ChannelNumber: admData.ammountBets,
                 bettors: {
                   Player1: {
                     id: player1.id,
@@ -273,6 +296,26 @@ module.exports = {
                 content: `${player1}, ${player2}`,
                 embeds: [inBetEmbed],
                 components: [menu],
+              });
+            }
+          });
+
+          collector.on("end", async () => {
+            if (
+              newChannelCreated &&
+              confirmationFaseQueue.countUsersInQueue(`ConfirmationFase${id}`) <
+                2
+            ) {
+              await newChannelCreated.send({
+                embeds: [
+                  errorEmbed(
+                    `Por ausência de confirmação essa sala fechará automaticamente em 5 seg`
+                  ),
+                ],
+              });
+
+              delay(5000).then(async () => {
+                await newChannelCreated.delete();
               });
             }
           });

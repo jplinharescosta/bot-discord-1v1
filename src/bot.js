@@ -3,19 +3,12 @@ const { token, databaseToken } = process.env;
 const { connect } = require("mongoose");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
+const QueueManager = require("../lib/classes/QueueManager.js");
 
-module.exports = {
-  queues: {
-    AdmQueue: [],
-    GeneralQueue: [],
-    ConfirmationFase: {},
-    "1v1": [],
-    "2v2": [],
-    "3v3": [],
-    "4v4": [],
-    "5v5": [],
-  },
-};
+const queueManager = new QueueManager();
+const admQueueManager = new QueueManager();
+const confirmationFaseQueue = new QueueManager();
+module.exports = { queueManager, admQueueManager, confirmationFaseQueue };
 
 const client = new Client({
   intents: [
