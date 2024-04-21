@@ -108,18 +108,22 @@ module.exports = {
           const copyAdm = [...admQueueManager.queues["admQueue"]];
           const randomElement = copyAdm.sort(() => 0.5 - Math.random())[0];
 
-          const adminRandom = await client.users.fetch(randomElement);
+          //const adminRandom = await client.users.fetch(randomElement);
+          const adminRandom = randomElement;
 
           const admData = await admDataInfos.findOne({
-            UserId: adminRandom.id,
+            UserId: adminRandom,
           });
 
           const categoryAdm = await interaction.guild.channels.cache.get(
             admData.categoryId
           );
 
-          const player1 = await client.users.fetch(players[0]);
-          const player2 = await client.users.fetch(players[1]);
+          //const player1 = await client.users.fetch(players[0]);
+          //const player2 = await client.users.fetch(players[1]);
+
+          const player1 = players[0];
+          const player2 = players[1];
 
           const newChannelCreated = await interaction.guild.channels.create({
             name: `aposta-aguardando`,
@@ -131,7 +135,7 @@ module.exports = {
                 deny: [PermissionsBitField.Flags.ViewChannel],
               },
               {
-                id: player1.id,
+                id: player1,
                 allow: [
                   PermissionsBitField.Flags.ViewChannel,
                   PermissionsBitField.Flags.SendMessages,
@@ -139,7 +143,7 @@ module.exports = {
                 ],
               },
               {
-                id: player2.id,
+                id: player2,
                 allow: [
                   PermissionsBitField.Flags.ViewChannel,
                   PermissionsBitField.Flags.SendMessages,
@@ -147,7 +151,7 @@ module.exports = {
                 ],
               },
               {
-                id: adminRandom.id,
+                id: adminRandom,
                 allow: [
                   PermissionsBitField.Flags.ViewChannel,
                   PermissionsBitField.Flags.SendMessages,
@@ -166,24 +170,23 @@ module.exports = {
             id
           );
           const send = await newChannelCreated.send({
-            content: `${player1} ${player2}`,
+            content: `<@${player1}> <@${player2}>`,
             embeds: [confirmEmbed],
             components: [buttons],
           });
 
-          const adm = await admDataInfos.findOne({ UserId: adminRandom.id });
+          const adm = await admDataInfos.findOne({ UserId: adminRandom });
 
           await admDataInfos.findOneAndUpdate(
             {
-              UserId: adminRandom.id,
+              UserId: adminRandom,
             },
             { ammountBets: adm.ammountBets + 1 }
           );
 
           //COLLECTOR A PARTIR DAQUI
 
-          const filter = (i) =>
-            i.user.id === player1.id || i.user.id === player2.id;
+          const filter = (i) => i.user.id === player1 || i.user.id === player2;
 
           const { inBetEmbed, menu } = inBetEmbedAndButtons(
             fullGameMode,
@@ -277,13 +280,13 @@ module.exports = {
                 ChannelNumber: admData.ammountBets,
                 bettors: {
                   Player1: {
-                    id: player1.id,
+                    id: player1,
                   },
                   Player2: {
-                    id: player2.id,
+                    id: player2,
                   },
                 },
-                ADM: adminRandom.id,
+                ADM: adminRandom,
                 betPrice: pvpInfosGet.Price,
                 createdTime: dataHoraBrasil,
               });
@@ -296,11 +299,13 @@ module.exports = {
 
               await i.message.delete();
 
-              await i.channel.send({
-                content: `${player1}, ${player2}`,
-                embeds: [inBetEmbed],
-                components: [menu],
-              });
+              i.channel
+                .send({
+                  content: `<@${player1}>, <@${player2}>`,
+                  embeds: [inBetEmbed],
+                  components: [menu],
+                })
+                .then((msg) => msg.pin());
             }
           });
 

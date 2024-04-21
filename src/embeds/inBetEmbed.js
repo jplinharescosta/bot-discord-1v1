@@ -23,7 +23,7 @@ const inBetEmbedAndButtons = (
     })
     .addFields({
       name: "Mediador",
-      value: `${adm}`,
+      value: `<@${adm}>`,
       inline: true,
     })
     .addFields({
@@ -33,7 +33,7 @@ const inBetEmbedAndButtons = (
     })
     .addFields({
       name: "Apostadores",
-      value: `${player1}\n${player2}`,
+      value: `<@${player1}>\n<@${player2}>`,
       inline: false,
     })
     .setFooter({ text: "Horário" })

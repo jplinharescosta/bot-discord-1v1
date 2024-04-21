@@ -20,8 +20,8 @@ module.exports = {
     let string = "";
     let num = 1;
     await admQueueManager.queues[queueName].forEach(async (value) => {
-      let adm = await client.users.fetch(value);
-      string += `${num}. ${adm}\n`;
+      let adm = value;
+      string += `${num}. <@${adm}>\n`;
       num++;
     });
 

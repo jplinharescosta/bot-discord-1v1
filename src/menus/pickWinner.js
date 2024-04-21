@@ -12,12 +12,12 @@ const pickWinnerMenu = async (id, client) => {
   });
   const p1 = await client.users.fetch(betData.bettors.Player1.id);
   const p2 = await client.users.fetch(betData.bettors.Player2.id);
-  const adm = await client.users.fetch(betData.ADM);
+  const adm = betData.ADM;
 
   const pickWinnerEmbed = new EmbedBuilder()
     .setTitle(`Definir Vencedor`)
     .setDescription(
-      `${adm}, por gentiliza, selecione abaixo o jogador que venceu esta partida`
+      `<@${adm}>, por gentiliza, selecione abaixo o jogador que venceu esta partida`
     )
     .setFooter({ text: "Horário" })
     .setTimestamp()

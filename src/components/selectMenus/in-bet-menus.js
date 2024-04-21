@@ -34,8 +34,11 @@ module.exports = {
     const betData = await betOnGoing.findOne({
       betId: id,
     });
-    const p1 = await client.users.fetch(betData.bettors.Player1.id);
-    const p2 = await client.users.fetch(betData.bettors.Player2.id);
+    // const p1 = await client.users.fetch(betData.bettors.Player1.id);
+    // const p2 = await client.users.fetch(betData.bettors.Player2.id);
+
+    const p1 = betData.bettors.Player1.id;
+    const p2 = betData.bettors.Player2.id;
 
     const { auxEmbed, menuUpdate, rulesButton } = updateInBetMenu(id);
 

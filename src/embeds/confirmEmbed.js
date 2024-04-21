@@ -19,7 +19,7 @@ const confirmEmbedAndButtons = (format, adm, betValue, betId) => {
       },
       {
         name: "Mediador",
-        value: `${adm}`,
+        value: `<@${adm}>`,
         inline: false,
       },
       {
