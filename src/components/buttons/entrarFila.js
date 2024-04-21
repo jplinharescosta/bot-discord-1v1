@@ -71,9 +71,6 @@ module.exports = {
       `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
     );
 
-    console.log(queueManager);
-    console.log(queueManager.countTotalUsers());
-
     const dataAtual = new Date();
     const options = { timeZone: "America/Sao_Paulo" };
     const dataHoraBrasil = dataAtual.toLocaleString("pt-BR", options);
@@ -225,8 +222,6 @@ module.exports = {
                 i.user.id,
                 `ConfirmationFase-${id}`
               );
-
-              console.log(confirmationFaseQueue.queues);
 
               const componentToEdit = i.message.components[0];
 
