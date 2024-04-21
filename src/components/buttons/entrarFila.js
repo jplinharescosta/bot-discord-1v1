@@ -71,6 +71,9 @@ module.exports = {
       `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
     );
 
+    console.log(queueManager);
+    console.log(queueManager.countTotalUsers());
+
     const dataAtual = new Date();
     const options = { timeZone: "America/Sao_Paulo" };
     const dataHoraBrasil = dataAtual.toLocaleString("pt-BR", options);
@@ -79,8 +82,9 @@ module.exports = {
     switch (gameMode) {
       case gameMode:
         if (
-          queueManager.queues[`${betPrice}-${pvpInfosGet.Mode}-${chatId}`]
-            .length == 2
+          queueManager.countUsersInQueue(
+            `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
+          ) == 2
         ) {
           const embedReset = interaction.message.embeds[0];
           embedReset.fields[2] = {
@@ -197,19 +201,18 @@ module.exports = {
           const time = 180_000;
           const collector = send.createMessageComponentCollector({
             componentType: ComponentType.Button,
-            filter,
             time,
           });
 
+          //confirmationFaseQueue.queues[`ConfirmationFase${id}`] = [];
+          confirmationFaseQueue.queues[`ConfirmationFase-${id}`] = [];
           collector.on("collect", async (i) => {
             if (!i.isButton()) return;
             if (i.customId === `confirmBet-${id}`) {
-              collector.resetTimer();
-
               if (
                 confirmationFaseQueue.isUserInQueue(
                   i.user.id,
-                  `ConfirmationFase${id}`
+                  `ConfirmationFase-${id}`
                 )
               ) {
                 return i.reply({
@@ -220,25 +223,29 @@ module.exports = {
 
               confirmationFaseQueue.addUserToQueue(
                 i.user.id,
-                `ConfirmationFase${id}`
+                `ConfirmationFase-${id}`
               );
+
+              console.log(confirmationFaseQueue.queues);
 
               const componentToEdit = i.message.components[0];
 
-              componentToEdit.components[0].data.label = `Confirmar [${
-                confirmationFaseQueue.queues[`ConfirmationFase${id}`].length
-              }/2]`;
+              componentToEdit.components[0].data.label = `Confirmar [${confirmationFaseQueue.countUsersInQueue(
+                `ConfirmationFase-${id}`
+              )}/2]`;
 
               const componentToSend = ActionRowBuilder.from(componentToEdit);
               await i.update({
                 components: [componentToSend],
               });
+
+              collector.resetTimer();
             }
             if (i.customId === `cancelBet`) {
               if (
                 confirmationFaseQueue.isUserInQueue(
                   i.user.id,
-                  `ConfirmationFase${id}`
+                  `ConfirmationFase-${id}`
                 )
               ) {
                 return i.reply({
@@ -247,7 +254,7 @@ module.exports = {
                 });
               }
 
-              confirmationFaseQueue.deleteQueue(`ConfirmationFase${id}`);
+              confirmationFaseQueue.deleteQueue(`ConfirmationFase-${id}`);
 
               await i.reply({
                 embeds: [
@@ -257,7 +264,7 @@ module.exports = {
                 ],
               });
 
-              delay(5000).then(async () => {
+              return delay(5000).then(async () => {
                 await i.channel.delete();
               });
             }
@@ -265,7 +272,7 @@ module.exports = {
 
             if (
               confirmationFaseQueue.countUsersInQueue(
-                `ConfirmationFase${id}`
+                `ConfirmationFase-${id}`
               ) === 2
             ) {
               await betOnGoing.create({
@@ -290,6 +297,8 @@ module.exports = {
                 name: `aposta-${admData.ammountBets}`,
               });
 
+              confirmationFaseQueue.deleteQueue(`ConfirmationFase-${id}`);
+
               await i.message.delete();
 
               await i.channel.send({
@@ -301,22 +310,19 @@ module.exports = {
           });
 
           collector.on("end", async () => {
-            if (
-              newChannelCreated &&
-              confirmationFaseQueue.countUsersInQueue(`ConfirmationFase${id}`) <
-                2
-            ) {
-              await newChannelCreated.send({
-                embeds: [
-                  errorEmbed(
-                    `Por ausência de confirmação essa sala fechará automaticamente em 5 seg`
-                  ),
-                ],
-              });
-
-              delay(5000).then(async () => {
-                await newChannelCreated.delete();
-              });
+            if (newChannelCreated.name == "aposta-aguardando") {
+              if (newChannelCreated) {
+                await newChannelCreated.send({
+                  embeds: [
+                    errorEmbed(
+                      `Por ausência de confirmação essa sala fechará automaticamente em 5 seg`
+                    ),
+                  ],
+                });
+                return delay(5000).then(async () => {
+                  await newChannelCreated.delete();
+                });
+              }
             }
           });
         }
