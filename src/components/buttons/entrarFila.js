@@ -5,7 +5,10 @@ const {
   PermissionsBitField,
   ComponentType,
   ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
 } = require("discord.js");
+const { adm_role_id, channel_value } = process.env;
 
 const betOnGoing = require("../../schemas/betOnGoing.js");
 const inBetEmbedAndButtons = require("../../embeds/inBetEmbed.js");
@@ -17,10 +20,13 @@ const {
   admQueueManager,
   confirmationFaseQueue,
 } = require("../../bot.js");
+const clipboardy = require("clipboardy");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+const historyMessages = [];
 
 module.exports = {
   data: {
@@ -161,7 +167,80 @@ module.exports = {
             ],
           });
 
-          let id = Math.random().toString(16).slice(2); //IMPORTANT
+          const collectorFilter = (m) => !m.author.bot;
+
+          const channelCollector = newChannelCreated.createMessageCollector({
+            filter: collectorFilter,
+          });
+          let id = Math.random().toString(16).slice(2);
+
+          channelCollector.on("collect", async (m) => {
+            if (!m.author.bot) {
+              historyMessages.push(
+                `[${new Date(m.createdTimestamp).toLocaleString("pt-BR")}] ${
+                  m.author.username
+                }: ${m.content}`
+              );
+            }
+            if (
+              m.content.length == 2 &&
+              m.member.roles.cache.has(adm_role_id) &&
+              /^\d+$/.test(m.content)
+            ) {
+              const lastMessages = await m.channel.messages.fetch({ limit: 2 });
+              const previousMessage = lastMessages.last();
+
+              const betPrice = pvpInfosGet.Price * 2;
+              const valueToPay = betPrice - parseFloat(channel_value);
+
+              const msg = await newChannelCreated.send({
+                content: `<@${player1}>, <@${player2}>`,
+                embeds: [
+                  new EmbedBuilder()
+                    .setTitle(`🎫 A sala foi criada!`)
+                    .setDescription(
+                      `
+Em **3 minutos** a sala será iniciada!
+                    
+**• ID:** ${previousMessage.content}
+**• Senha:** ${m.content}
+**• Total a Pagar** ~ R$ ${valueToPay.toFixed(2)}
+
+                    `
+                    )
+                    .setColor("Yellow")
+                    .setFooter({ text: `Horário` })
+                    .setTimestamp(),
+                ],
+                // components: [
+                //   new ActionRowBuilder().addComponents(
+                //     new ButtonBuilder()
+                //       .setLabel("Copiar ID")
+                //       .setCustomId(`copy-id-${id}`)
+                //       .setStyle(ButtonStyle.Secondary)
+                //   ),
+                // ],
+              });
+
+              // const collector = msg.createMessageComponentCollector({
+              //   componentType: ComponentType.Button,
+              // });
+
+              // collector.on("collect", async (i) => {
+              //   if (!i.isButton()) return;
+              //   if (i.customId === `copy-id-${id}`) {
+              //     const messageToCopy = previousMessage.content;
+              //     await clipboardy.write(messageToCopy);
+              //     await i.reply({
+              //       content: `Copiado com sucesso.`,
+              //       ephemeral: true,
+              //     });
+              //   }
+              // });
+            }
+          });
+
+          //IMPORTANT
 
           const { confirmEmbed, buttons } = confirmEmbedAndButtons(
             fullGameMode,
@@ -299,13 +378,32 @@ module.exports = {
 
               await i.message.delete();
 
-              i.channel
+              await i.channel
                 .send({
                   content: `<@${player1}>, <@${player2}>`,
                   embeds: [inBetEmbed],
                   components: [menu],
                 })
                 .then((msg) => msg.pin());
+
+              await i.channel.send({
+                content: `${admData.pixQrCode}`,
+              });
+
+              const playerValueRoom = channel_value / 2;
+
+              const valueToPay = pvpInfosGet.Price + playerValueRoom;
+
+              await i.channel.send({
+                content: `
+**CHAVE PIX:** 
+
+${admData.linkPix}
+
+**VALOR A PAGAR:** R$ ${valueToPay.toFixed(2)}
+                
+                `,
+              });
             }
           });
 
@@ -331,4 +429,5 @@ module.exports = {
         break;
     }
   },
+  historyMessages,
 };

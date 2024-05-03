@@ -9,6 +9,8 @@ const { adm_role_id } = process.env;
 
 const userDataSchema = require("../../schemas/userSchema.js");
 
+const { historyMessages } = require("../../components/buttons/entrarFila.js");
+
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -52,6 +54,17 @@ module.exports = {
         //interaction.deferUpdate();
         break;
       case "end-up-bet":
+        const arrayMsg = [...historyMessages];
+        // const msg = await interaction.channel.messages.fetch();
+        // msg.forEach((msg) => {
+        //   if (!msg.author.bot)
+        //     arrayMsg.push(
+        //       `[${new Date(msg.createdTimestamp).toLocaleString("pt-BR")}] ${
+        //         msg.author.username
+        //       }: ${msg.content}`
+        //     );
+        // });
+
         // UPDATE END DATE IN BET
         const dataAtual = new Date();
         const options = { timeZone: "America/Sao_Paulo" };
@@ -64,6 +77,7 @@ module.exports = {
           {
             Status: "ended",
             endTime: dataHoraBrasil,
+            historyMessages: historyMessages,
           }
         );
         // UPDATE END DATE IN BET
@@ -75,12 +89,10 @@ module.exports = {
           UserID: betData.bettors.Player2.id,
         });
 
-        if (!userDataPlayer1) {
+        if (!userDataPlayer1 || !userDataPlayer2) {
           userDataPlayer1 = await userDataSchema.create({
             UserID: betData.bettors.Player1.id,
           });
-        }
-        if (!userDataPlayer2) {
           userDataPlayer2 = await userDataSchema.create({
             UserID: betData.bettors.Player2.id,
           });

@@ -3,6 +3,8 @@ const admDataInfos = new Schema({
   UserId: { type: String, required: true },
   ammountBets: { type: Number, default: 0 },
   categoryId: { type: String, required: true },
+  linkPix: String,
+  pixQrCode: String,
   registeredDate: String,
 });
 

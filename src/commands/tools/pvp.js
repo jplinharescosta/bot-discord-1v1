@@ -5,6 +5,7 @@ const {
   ButtonStyle,
   EmbedBuilder,
   PermissionFlagsBits,
+  PermissionsBitField,
 } = require("discord.js");
 const { thumbnail } = process.env;
 const pvpInfoSchemas = require("../../schemas/pvpInfoSchema.js");
@@ -31,11 +32,16 @@ module.exports = {
         .setName("canal")
         .setDescription("Digite a sala onde a aposta será criada.")
         .setRequired(true)
-    ),
+    )
+    .addStringOption((option) =>
+      option.setName("thumb").setDescription("Definir thumbnail da fila.")
+    )
+    .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
   async execute(interaction, client) {
     const channelToSend = interaction.options.get("canal");
     const valor = interaction.options.get("valor");
     const modo = interaction.options.get("modo");
+    const thumb = interaction.options.getString("thumb");
 
     const enterButton = new ButtonBuilder({
       custom_id: "entrarFila",
@@ -73,7 +79,7 @@ module.exports = {
           inline: false,
         }
       )
-      .setThumbnail(thumbnail)
+      .setThumbnail(thumb || thumbnail)
       .setFooter({ text: "Horário" })
       .setTimestamp();
 

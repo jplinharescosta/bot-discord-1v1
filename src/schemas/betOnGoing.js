@@ -20,6 +20,7 @@ const betOnGoingData = new Schema({
   ADM: String,
   Status: { type: String, default: "on_going" },
   betPrice: String,
+  historyMessages: Array,
   createdTime: String,
   endTime: String,
 });

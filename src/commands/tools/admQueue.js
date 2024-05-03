@@ -5,74 +5,134 @@ const {
   ButtonStyle,
   EmbedBuilder,
   PermissionFlagsBits,
+  PermissionsBitField,
 } = require("discord.js");
-//const { queues } = require("../../bot.js");
-const admQueueInfoSchemas = require("../../schemas/admQueueInfoSchema.js");
+
+const admQueueSchema = require("../../schemas/admQueueSchema.js");
+const errorEmbed = require("../../embeds/errorEmbed.js");
+const sucessEmbed = require("../../embeds/sucessEmbed.js");
 const { thumbnail } = process.env;
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("set-adm-queue")
-    .setDescription("Criar sala queue para ADM")
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addChannelOption((option) =>
-      option
-        .setName("canal")
-        .setDescription("Sala onde será criada")
-        .setRequired(true)
-    ),
-
+    .setName("fc")
+    .setDescription("Gerenciar sistema de fila de controle")
+    .addSubcommand((command) =>
+      command
+        .setName("setup")
+        .setDescription("Configura fila de controle")
+        .addChannelOption((option) =>
+          option
+            .setName("canal")
+            .setDescription("Canal em que será configurado a fila de controle.")
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((command) =>
+      command.setName("remover").setDescription("Desabilita fila de controle.")
+    )
+    .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
   async execute(interaction, client) {
-    const enterButton = new ButtonBuilder({
-      custom_id: "entrarFilaAdm",
-      label: "Entrar na fila",
-      style: ButtonStyle.Primary,
+    const { options } = interaction;
+    const sub = options.getSubcommand();
+    const channelToSend = options.get("canal");
+    const data = await admQueueSchema.findOne({
+      GuildID: interaction.guild.id,
     });
 
-    const exitButton = new ButtonBuilder({
-      custom_id: "sairFilaAdm",
-      label: "Sair da fila",
-      style: ButtonStyle.Danger,
-    });
+    switch (sub) {
+      case "setup":
+        if (data) {
+          return await interaction.reply({
+            embeds: [
+              errorEmbed(
+                `A fila de controle nesse servidor já está configurada.`
+              ),
+            ],
+            ephemeral: true,
+          });
+        }
 
-    // let string;
-    // let num = 1;
-    // await queues.AdmQueue.forEach(async (value) => {
-    //   let adm = client.users.fetch(value);
-    //   string += `${num} - ${adm.user}\n`;
-    //   num++;
-    // });
+        const enterButton = new ButtonBuilder({
+          custom_id: "entrarFilaAdm",
+          label: "Entrar na fila",
+          style: ButtonStyle.Primary,
+        });
 
-    // string = string.replace(undefined, "");
+        const exitButton = new ButtonBuilder({
+          custom_id: "sairFilaAdm",
+          label: "Sair da fila",
+          style: ButtonStyle.Danger,
+        });
 
-    const admQueueEmbed = new EmbedBuilder()
-      .setTitle("Fila de ADMs")
-      .addFields({
-        name: "Mediadores disponiveis",
-        value: `Nenhum mediador na fila.`,
-      })
-      .setThumbnail(thumbnail)
-      .setFooter({ text: "Todos os mediadores estão aleatorizados!" });
+        const admQueueEmbed = new EmbedBuilder()
+          .setTitle("Fila de ADMs")
+          .addFields({
+            name: "Mediadores disponiveis",
+            value: `Nenhum mediador na fila.`,
+          })
+          .setThumbnail(thumbnail)
+          .setFooter({ text: "Todos os mediadores estão aleatorizados!" });
 
-    const buttons = new ActionRowBuilder().addComponents(
-      enterButton,
-      exitButton
-    );
+        const buttons = new ActionRowBuilder().addComponents(
+          enterButton,
+          exitButton
+        );
 
-    const channelToSend = interaction.options.get("canal");
-    const msg = await channelToSend.channel.send({
-      embeds: [admQueueEmbed],
-      components: [buttons],
-    });
+        const msg = await channelToSend.channel.send({
+          embeds: [admQueueEmbed],
+          components: [buttons],
+        });
 
-    const saveAdmInfo = await admQueueInfoSchemas.create({
-      ChatID: channelToSend.channel.id,
-      MessageID: msg.id,
-    });
-    await saveAdmInfo.save().catch((err) => console.error(err));
-    await interaction.reply({
-      content: `Sala ADM criada com sucesso em -> ${channelToSend.channel}`,
-      ephemeral: true,
-    });
+        await admQueueSchema.create({
+          GuildID: interaction.guild.id,
+          MessageID: msg.id,
+          ChatID: channelToSend.channel.id,
+        });
+
+        await interaction.reply({
+          embeds: [
+            sucessEmbed(
+              `Fila de controle configurada com sucesso no canal -> ${channelToSend.channel}`
+            ),
+          ],
+          ephemeral: true,
+        });
+
+        break;
+      case "remover":
+        if (!data) {
+          return await interaction.reply({
+            embeds: [
+              errorEmbed(
+                `A fila de controle ainda não está configurada. Utilize /fc setup [canal]`
+              ),
+            ],
+            ephemeral: true,
+          });
+        }
+
+        await admQueueSchema.findOneAndDelete({
+          GuildID: interaction.guild.id,
+        });
+
+        const channel = await interaction.channel.fetch(data.ChatID);
+        await channel.messages
+          .fetch(data.MessageID)
+          .then((msg) => msg.delete());
+
+        await interaction.reply({
+          embeds: [
+            sucessEmbed(
+              `Configuração de fila de controle removida com sucesso.`
+            ),
+          ],
+          ephemeral: true,
+        });
+        break;
+
+      default:
+        break;
+    }
   },
 };

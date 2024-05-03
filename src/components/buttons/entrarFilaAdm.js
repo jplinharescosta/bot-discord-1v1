@@ -1,6 +1,6 @@
-const { EmbedBuilder, Colors } = require("discord.js");
 const admDataInfos = require("../../schemas/admDataInfos.js");
 const { admQueueManager } = require("../../bot.js");
+const errorEmbed = require("../../embeds/errorEmbed.js");
 const queueName = "admQueue";
 
 module.exports = {
@@ -16,7 +16,22 @@ module.exports = {
 
     if (!dataAdm) {
       return interaction.reply({
-        content: `${interaction.user} você não está cadastrado no Banco de dados, entre em contato com algum supervisor.`,
+        embeds: [
+          errorEmbed(
+            `${interaction.user} você não está cadastrado no Banco de dados, entre em contato com algum supervisor.`
+          ),
+        ],
+        ephemeral: true,
+      });
+    }
+
+    if (!dataAdm.linkPix || !dataAdm.pixQrCode) {
+      return interaction.reply({
+        embeds: [
+          errorEmbed(
+            `${interaction.user} você não tem seu PIX e/ou QRCode cadastrados no Banco de dados. Utilize /mediador add-pix e add-qr para adiciona-los.`
+          ),
+        ],
         ephemeral: true,
       });
     }
