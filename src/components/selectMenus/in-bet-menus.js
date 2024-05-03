@@ -9,7 +9,7 @@ const { adm_role_id } = process.env;
 
 const userDataSchema = require("../../schemas/userSchema.js");
 
-const { historyMessages } = require("../../components/buttons/entrarFila.js");
+const { messages } = require("../../components/buttons/entrarFila.js");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -54,7 +54,7 @@ module.exports = {
         //interaction.deferUpdate();
         break;
       case "end-up-bet":
-        const arrayMsg = [...historyMessages];
+        //const arrayMsg = [...historyMessages];
         // const msg = await interaction.channel.messages.fetch();
         // msg.forEach((msg) => {
         //   if (!msg.author.bot)
@@ -77,9 +77,12 @@ module.exports = {
           {
             Status: "ended",
             endTime: dataHoraBrasil,
-            historyMessages: historyMessages,
+            historyMessages: messages[`historyMessage-${id}`],
           }
         );
+
+        delete messages[`historyMessage-${id}`];
+
         // UPDATE END DATE IN BET
 
         let userDataPlayer1 = await userDataSchema.findOne({

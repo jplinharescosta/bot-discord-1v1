@@ -26,7 +26,7 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const historyMessages = [];
+const messages = {};
 
 module.exports = {
   data: {
@@ -174,9 +174,10 @@ module.exports = {
           });
           let id = Math.random().toString(16).slice(2);
 
+          messages[`historyMessage-${id}`] = [];
           channelCollector.on("collect", async (m) => {
             if (!m.author.bot) {
-              historyMessages.push(
+              messages[`historyMessage-${id}`].push(
                 `[${new Date(m.createdTimestamp).toLocaleString("pt-BR")}] ${
                   m.author.username
                 }: ${m.content}`
@@ -429,5 +430,5 @@ ${admData.linkPix}
         break;
     }
   },
-  historyMessages,
+  messages,
 };
