@@ -36,12 +36,18 @@ module.exports = {
     .addStringOption((option) =>
       option.setName("thumb").setDescription("Definir thumbnail da fila.")
     )
+    .addStringOption((option) =>
+      option
+        .setName("color")
+        .setDescription("Definir cor da linha lateral da fila.")
+    )
     .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
   async execute(interaction, client) {
     const channelToSend = interaction.options.get("canal");
     const valor = interaction.options.get("valor");
     const modo = interaction.options.get("modo");
     const thumb = interaction.options.getString("thumb");
+    const color = interaction.options.getString("color");
 
     const enterButton = new ButtonBuilder({
       custom_id: "entrarFila",
@@ -81,6 +87,7 @@ module.exports = {
       )
       .setThumbnail(thumb || thumbnail)
       .setFooter({ text: "Horário" })
+      .setColor(color || "White")
       .setTimestamp();
 
     const msg = await channelToSend.channel.send({
