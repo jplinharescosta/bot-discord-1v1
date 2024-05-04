@@ -7,8 +7,8 @@ const {
   PermissionFlagsBits,
   PermissionsBitField,
 } = require("discord.js");
-const { thumbnail } = process.env;
 const pvpInfoSchemas = require("../../schemas/pvpInfoSchema.js");
+const envConfig = require("../../schemas/envConfig.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -43,6 +43,9 @@ module.exports = {
     )
     .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
   async execute(interaction, client) {
+    const { DefaultThumbNail } = await envConfig.findOne({
+      Name: "envConfig",
+    });
     const channelToSend = interaction.options.get("canal");
     const valor = interaction.options.get("valor");
     const modo = interaction.options.get("modo");
@@ -85,7 +88,7 @@ module.exports = {
           inline: false,
         }
       )
-      .setThumbnail(thumb || thumbnail)
+      .setThumbnail(thumb || DefaultThumbNail)
       .setFooter({ text: "Horário" })
       .setColor(color || "White")
       .setTimestamp();

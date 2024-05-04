@@ -11,7 +11,7 @@ const {
 const admQueueSchema = require("../../schemas/admQueueSchema.js");
 const errorEmbed = require("../../embeds/errorEmbed.js");
 const sucessEmbed = require("../../embeds/sucessEmbed.js");
-const { thumbnail } = process.env;
+const envConfig = require("../../schemas/envConfig.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -33,6 +33,9 @@ module.exports = {
     )
     .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
   async execute(interaction, client) {
+    const { DefaultThumbNail } = await envConfig.findOne({
+      Name: "envConfig",
+    });
     const { options } = interaction;
     const sub = options.getSubcommand();
     const channelToSend = options.get("canal");
@@ -71,7 +74,7 @@ module.exports = {
             name: "Mediadores disponiveis",
             value: `Nenhum mediador na fila.`,
           })
-          .setThumbnail(thumbnail)
+          .setThumbnail(DefaultThumbNail)
           .setFooter({ text: "Todos os mediadores estão aleatorizados!" });
 
         const buttons = new ActionRowBuilder().addComponents(

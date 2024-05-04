@@ -3,13 +3,10 @@ const pickWinnerMenu = require("../../menus/pickWinner.js");
 const betOnGoing = require("../../schemas/betOnGoing.js");
 const updateInBetMenu = require("../../embeds/updateInBetMenu.js");
 const decidedWinner = require("../../embeds/decidedWinner.js");
-const admDataInfos = require("../../schemas/admDataInfos.js");
 const { EmbedBuilder } = require("discord.js");
-const { adm_role_id } = process.env;
-
 const userDataSchema = require("../../schemas/userSchema.js");
-
 const { messages } = require("../../components/buttons/entrarFila.js");
+const envConfig = require("../../schemas/envConfig.js");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -20,7 +17,16 @@ module.exports = {
     name: "in-bet-select-menu",
   },
   async execute(interaction, client) {
-    if (!interaction.member.roles.cache.has(adm_role_id)) {
+    const { MediatorRoleId } = await envConfig.findOne({
+      Name: "envConfig",
+    });
+
+    if (
+      !interaction.member.roles.cache.has(MediatorRoleId) &&
+      !interaction.member.permissions.has(
+        PermissionsBitField.Flags.Administrator
+      )
+    ) {
       return interaction.reply({
         embeds: [
           errorEmbed(

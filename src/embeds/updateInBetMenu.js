@@ -6,9 +6,13 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require("discord.js");
-const { rules_link_chat } = process.env;
+const envConfig = require("../schemas/envConfig");
 
-const updateInBetMenu = (id) => {
+const updateInBetMenu = async (id) => {
+  const { LinkToRulesChannel } = await envConfig.findOne({
+    Name: "envConfig",
+  });
+
   const auxEmbed = new EmbedBuilder()
     .setTitle(`Menu Auxiliar`)
     .setDescription(
@@ -32,7 +36,7 @@ const updateInBetMenu = (id) => {
   const button = new ButtonBuilder({
     label: "📖 Regras",
     style: ButtonStyle.Link,
-    url: rules_link_chat,
+    url: LinkToRulesChannel,
   });
 
   const rulesButton = new ActionRowBuilder().addComponents(button);

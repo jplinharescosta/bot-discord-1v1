@@ -5,10 +5,7 @@ const {
   PermissionsBitField,
   ComponentType,
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
 } = require("discord.js");
-const { adm_role_id, channel_value } = process.env;
 
 const betOnGoing = require("../../schemas/betOnGoing.js");
 const inBetEmbedAndButtons = require("../../embeds/inBetEmbed.js");
@@ -20,7 +17,8 @@ const {
   admQueueManager,
   confirmationFaseQueue,
 } = require("../../bot.js");
-const clipboardy = require("clipboardy");
+
+const envConfig = require("../../schemas/envConfig.js");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,6 +31,10 @@ module.exports = {
     name: "entrarFila",
   },
   async execute(interaction, client) {
+    const { MediatorRoleId, ChannelValue } = await envConfig.findOne({
+      Name: "envConfig",
+    });
+
     if (!interaction.isButton()) return;
 
     if (admQueueManager.countTotalUsers() === 0) {
@@ -185,14 +187,14 @@ module.exports = {
             }
             if (
               m.content.length == 2 &&
-              m.member.roles.cache.has(adm_role_id) &&
+              m.member.roles.cache.has(MediatorRoleId) &&
               /^\d+$/.test(m.content)
             ) {
               const lastMessages = await m.channel.messages.fetch({ limit: 2 });
               const previousMessage = lastMessages.last();
 
               const betPrice = pvpInfosGet.Price * 2;
-              const valueToPay = betPrice - parseFloat(channel_value);
+              const valueToPay = betPrice - parseFloat(ChannelValue);
 
               const msg = await newChannelCreated.send({
                 content: `<@${player1}>, <@${player2}>`,
@@ -213,31 +215,7 @@ Em **3 minutos** a sala será iniciada!
                     .setFooter({ text: `Horário` })
                     .setTimestamp(),
                 ],
-                // components: [
-                //   new ActionRowBuilder().addComponents(
-                //     new ButtonBuilder()
-                //       .setLabel("Copiar ID")
-                //       .setCustomId(`copy-id-${id}`)
-                //       .setStyle(ButtonStyle.Secondary)
-                //   ),
-                // ],
               });
-
-              // const collector = msg.createMessageComponentCollector({
-              //   componentType: ComponentType.Button,
-              // });
-
-              // collector.on("collect", async (i) => {
-              //   if (!i.isButton()) return;
-              //   if (i.customId === `copy-id-${id}`) {
-              //     const messageToCopy = previousMessage.content;
-              //     await clipboardy.write(messageToCopy);
-              //     await i.reply({
-              //       content: `Copiado com sucesso.`,
-              //       ephemeral: true,
-              //     });
-              //   }
-              // });
             }
           });
 
@@ -272,7 +250,7 @@ Em **3 minutos** a sala será iniciada!
             fullGameMode,
             adminRandom,
             pvpInfosGet.Price,
-            process.env.channel_value,
+            ChannelValue,
             player1,
             player2,
             id
@@ -391,7 +369,7 @@ Em **3 minutos** a sala será iniciada!
                 content: `${admData.pixQrCode}`,
               });
 
-              const playerValueRoom = channel_value / 2;
+              const playerValueRoom = ChannelValue / 2;
 
               const valueToPay = pvpInfosGet.Price + playerValueRoom;
 

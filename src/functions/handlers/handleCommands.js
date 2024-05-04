@@ -1,6 +1,6 @@
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
-const { client_id, guild_id } = process.env;
+const { guild_id, client_id, token } = process.env;
 const fs = require("fs");
 
 module.exports = (client) => {
@@ -19,13 +19,11 @@ module.exports = (client) => {
       }
     }
 
-    const clientId = client_id;
-    const guildId = guild_id;
-    const rest = new REST({ version: "10" }).setToken(process.env.token);
+    const rest = new REST({ version: "10" }).setToken(token);
 
     try {
       console.log("Comandos de atualização do aplicativo (/) iniciados");
-      await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+      await rest.put(Routes.applicationGuildCommands(client_id, guild_id), {
         body: client.commandArray,
       });
 
