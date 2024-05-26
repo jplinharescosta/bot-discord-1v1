@@ -19,6 +19,7 @@ const {
 } = require("../../bot.js");
 
 const envConfig = require("../../schemas/envConfig.js");
+const pvpInfoSchema = require("../../schemas/pvpInfoSchema");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -47,9 +48,29 @@ module.exports = {
     }
 
     if (queueManager.isUserInAnyQueue(interaction.user.id)) {
+      const userQueue = queueManager
+        .getUserQueue(interaction.user.id)
+        .split("-")[2];
+
+      const data = await pvpInfoSchema.findOne({
+        MessageID: userQueue,
+      });
+
+      const queueMessage = await client.channels.cache
+        .get(data.ChatID)
+        .messages.fetch(userQueue);
+
+      const url = `https://discord.com/channels/${queueMessage.guildId}/${queueMessage.channelId}/${queueMessage.id}`;
+
+      if (interaction.message.id == userQueue) {
+        return await interaction.reply({
+          embeds: [errorEmbed(`${interaction.user}, você já está nessa fila.`)],
+          ephemeral: true,
+        });
+      }
       return await interaction.reply({
         embeds: [
-          errorEmbed(`${interaction.user}, você já está na em alguma fila!`),
+          errorEmbed(`${interaction.user}, você já está na fila ${url}`),
         ],
         ephemeral: true,
       });
@@ -104,20 +125,8 @@ module.exports = {
             `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
           ].splice(0, 2);
 
-          queueManager.removeUserFromQueue(
-            players[0],
-            `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
-          );
-          queueManager.removeUserFromQueue(
-            players[1],
-            `${betPrice}-${pvpInfosGet.Mode}-${chatId}`
-          );
-
           const copyAdm = [...admQueueManager.queues["admQueue"]];
-          const randomElement = copyAdm.sort(() => 0.5 - Math.random())[0];
-
-          //const adminRandom = await client.users.fetch(randomElement);
-          const adminRandom = randomElement;
+          const adminRandom = copyAdm.sort(() => 0.5 - Math.random())[0];
 
           const admData = await admDataInfos.findOne({
             UserId: adminRandom,
@@ -127,11 +136,17 @@ module.exports = {
             admData.categoryId
           );
 
-          //const player1 = await client.users.fetch(players[0]);
-          //const player2 = await client.users.fetch(players[1]);
-
           const player1 = players[0];
           const player2 = players[1];
+
+          const adm = await admDataInfos.findOne({ UserId: adminRandom });
+
+          await admDataInfos.findOneAndUpdate(
+            {
+              UserId: adminRandom,
+            },
+            { ammountBets: adm.ammountBets + 1 }
+          );
 
           const newChannelCreated = await interaction.guild.channels.create({
             name: `aposta-aguardando`,
@@ -232,15 +247,6 @@ Em **3 minutos** a sala será iniciada!
             embeds: [confirmEmbed],
             components: [buttons],
           });
-
-          const adm = await admDataInfos.findOne({ UserId: adminRandom });
-
-          await admDataInfos.findOneAndUpdate(
-            {
-              UserId: adminRandom,
-            },
-            { ammountBets: adm.ammountBets + 1 }
-          );
 
           //COLLECTOR A PARTIR DAQUI
 

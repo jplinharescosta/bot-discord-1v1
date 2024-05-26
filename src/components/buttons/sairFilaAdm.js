@@ -19,7 +19,7 @@ module.exports = {
 
     let string = "";
     let num = 1;
-    await admQueueManager.queues[queueName].forEach(async (value) => {
+    admQueueManager.queues[queueName].forEach(async (value) => {
       let adm = value;
       string += `${num}. <@${adm}>\n`;
       num++;
@@ -28,7 +28,7 @@ module.exports = {
     string = string.replace("undefined", "");
 
     const embed = interaction.message.embeds[0];
-    embed.fields[0] = {
+    embed.fields = {
       name: "Mediadores disponiveis",
       value: `${string || "Nenhum mediador na fila."}`,
     };

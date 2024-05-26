@@ -47,7 +47,7 @@ module.exports = {
 
     let string;
     let num = 1;
-    await admQueueManager.queues[queueName].forEach(async (value) => {
+    admQueueManager.queues[queueName].forEach(async (value) => {
       let adm = value;
       string += `${num}. <@${adm}>\n`;
       num++;
