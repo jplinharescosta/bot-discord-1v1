@@ -1,6 +1,6 @@
 const { Schema, default: mongoose } = require("mongoose");
-const userDataSchema = new Schema({
-  UserID: { type: String, required: true },
+const monthRankingSchema = new Schema({
+  UserID: String,
   Win: { type: Number, default: 0 },
   Loss: { type: Number, default: 0 },
   TotalWon: { type: Number, default: 0 },
@@ -8,5 +8,5 @@ const userDataSchema = new Schema({
 });
 
 module.exports =
-  mongoose.models.userDataSchema ||
-  mongoose.model("userData", userDataSchema, "userData");
+  mongoose.models.monthRankingSchema ||
+  mongoose.model("month-ranking", monthRankingSchema, "month-ranking");

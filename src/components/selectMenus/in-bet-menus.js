@@ -3,10 +3,18 @@ const pickWinnerMenu = require("../../menus/pickWinner.js");
 const betOnGoing = require("../../schemas/betOnGoing.js");
 const updateInBetMenu = require("../../embeds/updateInBetMenu.js");
 const decidedWinner = require("../../embeds/decidedWinner.js");
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const userDataSchema = require("../../schemas/userSchema.js");
 const { messages } = require("../../components/buttons/entrarFila.js");
 const envConfig = require("../../schemas/envConfig.js");
+const dayRankingSchema = require("../../schemas/dayRankingSchema.js");
+const weekRankingSchema = require("../../schemas/weekRankingSchema.js");
+const monthRankingSchema = require("../../schemas/monthRankingSchema.js");
+const {
+  updateRanking,
+  createDataRanking,
+  pickWinnerDatabaseUpdate,
+} = require("../../utils/functions.js");
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -17,9 +25,10 @@ module.exports = {
     name: "in-bet-select-menu",
   },
   async execute(interaction, client) {
-    const { MediatorRoleId } = await envConfig.findOne({
-      Name: "envConfig",
-    });
+    const { MediatorRoleId, ChannelValue, TaxToMediator } =
+      await envConfig.findOne({
+        Name: "envConfig",
+      });
 
     if (
       !interaction.member.roles.cache.has(MediatorRoleId) &&
@@ -42,13 +51,28 @@ module.exports = {
     const betData = await betOnGoing.findOne({
       betId: id,
     });
-    // const p1 = await client.users.fetch(betData.bettors.Player1.id);
-    // const p2 = await client.users.fetch(betData.bettors.Player2.id);
 
     const p1 = betData.bettors.Player1.id;
     const p2 = betData.bettors.Player2.id;
+    const p1Win = betData.bettors.Player1.win;
+    const p2Win = betData.bettors.Player2.win;
+    const p1Lose = betData.bettors.Player1.lose;
+    const p2Lose = betData.bettors.Player2.lose;
+    const p1TotalWon = betData.bettors.Player1.TotalWon;
+    const p2TotalWon = betData.bettors.Player2.TotalWon;
+    const p1DayProfit = betData.bettors.Player1.DayProfit;
+    const p2DayProfit = betData.bettors.Player2.DayProfit;
 
-    const { auxEmbed, menuUpdate, rulesButton } = updateInBetMenu(id);
+    const percentage = parseFloat(TaxToMediator) / 100;
+    const betPrice = parseFloat(betData.betPrice);
+    // prettier-ignore
+    const tax = (betPrice * 2) * percentage;
+
+    // const fullPrice = parseFloat(betPrice - ChannelValue - tax);
+
+    const playerProfitOrLoss = betPrice - tax - ChannelValue / 2;
+
+    const { auxEmbed, menuUpdate, rulesButton } = await updateInBetMenu(id);
 
     switch (value) {
       case "in-bet-pick-winner":
@@ -60,17 +84,6 @@ module.exports = {
         //interaction.deferUpdate();
         break;
       case "end-up-bet":
-        //const arrayMsg = [...historyMessages];
-        // const msg = await interaction.channel.messages.fetch();
-        // msg.forEach((msg) => {
-        //   if (!msg.author.bot)
-        //     arrayMsg.push(
-        //       `[${new Date(msg.createdTimestamp).toLocaleString("pt-BR")}] ${
-        //         msg.author.username
-        //       }: ${msg.content}`
-        //     );
-        // });
-
         // UPDATE END DATE IN BET
         const dataAtual = new Date();
         const options = { timeZone: "America/Sao_Paulo" };
@@ -89,41 +102,72 @@ module.exports = {
 
         delete messages[`historyMessage-${id}`];
 
-        // UPDATE END DATE IN BET
-
-        let userDataPlayer1 = await userDataSchema.findOne({
-          UserID: betData.bettors.Player1.id,
-        });
-        let userDataPlayer2 = await userDataSchema.findOne({
-          UserID: betData.bettors.Player2.id,
-        });
-
-        if (!userDataPlayer1 || !userDataPlayer2) {
-          userDataPlayer1 = await userDataSchema.create({
-            UserID: betData.bettors.Player1.id,
-          });
-          userDataPlayer2 = await userDataSchema.create({
-            UserID: betData.bettors.Player2.id,
-          });
-        }
-
-        await userDataSchema.findOneAndUpdate(
-          {
-            UserID: betData.bettors.Player1.id,
-          },
-          {
-            Win: userDataPlayer1.Win + betData.bettors.Player1.win,
-            Loss: userDataPlayer1.Loss + betData.bettors.Player1.lose,
-          }
+        await createDataRanking(p1, userDataSchema);
+        await createDataRanking(p2, userDataSchema);
+        await updateRanking(
+          p1,
+          p2,
+          userDataSchema,
+          p1Win,
+          p2Win,
+          p1Lose,
+          p2Lose,
+          p1TotalWon,
+          p2TotalWon,
+          p1DayProfit,
+          p2DayProfit
         );
-        await userDataSchema.findOneAndUpdate(
-          {
-            UserID: betData.bettors.Player2.id,
-          },
-          {
-            Win: userDataPlayer2.Win + betData.bettors.Player2.win,
-            Loss: userDataPlayer2.Loss + betData.bettors.Player2.lose,
-          }
+
+        //RANKING
+        await createDataRanking(p1, dayRankingSchema);
+        await createDataRanking(p2, dayRankingSchema);
+
+        await updateRanking(
+          p1,
+          p2,
+          dayRankingSchema,
+          p1Win,
+          p2Win,
+          p1Lose,
+          p2Lose,
+          p1TotalWon,
+          p2TotalWon,
+          p1DayProfit,
+          p2DayProfit
+        );
+
+        await createDataRanking(p1, weekRankingSchema);
+        await createDataRanking(p2, weekRankingSchema);
+
+        await updateRanking(
+          p1,
+          p2,
+          weekRankingSchema,
+          p1Win,
+          p2Win,
+          p1Lose,
+          p2Lose,
+          p1TotalWon,
+          p2TotalWon,
+          p1DayProfit,
+          p2DayProfit
+        );
+
+        await createDataRanking(p1, monthRankingSchema);
+        await createDataRanking(p2, monthRankingSchema);
+
+        await updateRanking(
+          p1,
+          p2,
+          monthRankingSchema,
+          p1Win,
+          p2Win,
+          p1Lose,
+          p2Lose,
+          p1TotalWon,
+          p2TotalWon,
+          p1DayProfit,
+          p2DayProfit
         );
 
         await interaction.reply({
@@ -153,24 +197,21 @@ module.exports = {
         });
 
         // UPDATE DATABASE - USER
-        await betOnGoing.findOneAndUpdate(
-          {
-            betId: id,
-          },
-          {
-            bettors: {
-              Player1: {
-                id: betData.bettors.Player1.id,
-                win: betData.bettors.Player1.win + 1,
-                lose: betData.bettors.Player1.lose,
-              },
-              Player2: {
-                id: betData.bettors.Player2.id,
-                win: betData.bettors.Player2.win,
-                lose: betData.bettors.Player2.lose + 1,
-              },
-            },
-          }
+        await pickWinnerDatabaseUpdate(
+          "player-1",
+          betOnGoing,
+          id,
+          p1,
+          p2,
+          p1Win,
+          p2Win,
+          p1Lose,
+          p2Lose,
+          p1TotalWon,
+          p2TotalWon,
+          p1DayProfit,
+          p2DayProfit,
+          playerProfitOrLoss
         );
 
         break;
@@ -187,24 +228,21 @@ module.exports = {
         });
 
         // UPDATE DATABASE - USER
-        await betOnGoing.findOneAndUpdate(
-          {
-            betId: id,
-          },
-          {
-            bettors: {
-              Player1: {
-                id: betData.bettors.Player1.id,
-                win: betData.bettors.Player1.win,
-                lose: betData.bettors.Player1.lose + 1,
-              },
-              Player2: {
-                id: betData.bettors.Player2.id,
-                win: betData.bettors.Player2.win + 1,
-                lose: betData.bettors.Player2.lose,
-              },
-            },
-          }
+        await pickWinnerDatabaseUpdate(
+          "player-2",
+          betOnGoing,
+          id,
+          p1,
+          p2,
+          p1Win,
+          p2Win,
+          p1Lose,
+          p2Lose,
+          p1TotalWon,
+          p2TotalWon,
+          p1DayProfit,
+          p2DayProfit,
+          playerProfitOrLoss
         );
 
         break;
