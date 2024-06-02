@@ -44,8 +44,8 @@ module.exports = {
 
     const embed = interaction.message.embeds[0];
     embed.fields[2] = {
-      name: `💻 | Apostadores`,
-      value: `Nenhum apostador na fila.`,
+      name: `💻 | Jogadores`,
+      value: `Nenhum jogador na fila.`,
       inline: false,
     };
 

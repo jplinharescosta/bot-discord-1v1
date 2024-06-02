@@ -93,7 +93,7 @@ module.exports = {
         );
 
         const embed = new EmbedBuilder()
-          .setTitle(`${modo.value.split(" ")[0]} | Fila de Apostas`)
+          .setTitle(`${modo.value.split(" ")[0]} | Fila de Competição`)
           .addFields(
             {
               name: `👤 | Modo de jogo`,
@@ -101,13 +101,13 @@ module.exports = {
               inline: false,
             },
             {
-              name: `💰 | Valor da aposta`,
+              name: `💰 | Valor`,
               value: `R$ ${valor.value},00`,
               inline: false,
             },
             {
-              name: `💻 | Apostadores`,
-              value: "Nenhum apostador na fila.",
+              name: `💻 | Jogadores`,
+              value: "Nenhum jogador na fila.",
               inline: false,
             }
           )

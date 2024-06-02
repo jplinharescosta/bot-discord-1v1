@@ -78,7 +78,7 @@ module.exports = {
 
     const embedGetQueue = interaction.message.embeds[0];
     embedGetQueue.fields[2] = {
-      name: `💻 | Apostadores`,
+      name: `💻 | Jogadores`,
       value: `${interaction.user}`,
       inline: false,
     };
