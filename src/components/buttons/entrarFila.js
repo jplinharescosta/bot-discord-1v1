@@ -41,7 +41,9 @@ module.exports = {
     if (admQueueManager.countTotalUsers() === 0) {
       return await interaction.reply({
         embeds: [
-          errorEmbed(`${interaction.user}, não temos ADM online no momento!`),
+          errorEmbed(
+            `${interaction.user}, não temos MEDIADORES online no momento!`
+          ),
         ],
         ephemeral: true,
       });
