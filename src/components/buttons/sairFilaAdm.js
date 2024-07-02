@@ -28,10 +28,11 @@ module.exports = {
     string = string.replace("undefined", "");
 
     const embed = interaction.message.embeds[0];
-    embed.fields = {
+    embed.fields[0] = {
       name: "Mediadores disponiveis",
       value: `${string || "Nenhum mediador na fila."}`,
     };
+
     await interaction.update({
       embeds: [embed],
     });

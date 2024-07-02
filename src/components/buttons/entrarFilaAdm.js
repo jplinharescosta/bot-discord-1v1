@@ -45,7 +45,7 @@ module.exports = {
 
     admQueueManager.addUserToQueue(interaction.user.id, queueName);
 
-    let string;
+    let string = "";
     let num = 1;
     admQueueManager.queues[queueName].forEach(async (value) => {
       let adm = value;
@@ -60,6 +60,7 @@ module.exports = {
       name: "Mediadores disponiveis",
       value: `${string || "Nenhum mediador na fila."}`,
     };
+
     await interaction.update({
       embeds: [embed],
     });
