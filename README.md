@@ -36,7 +36,44 @@ This project was developed using the following technologies:
     - Rename `.env.exemple` to `.env`.
     - Fill in the required information in the `.env` file, such as your bot token and other configurations.
 
-5. **Start the bot:**
+5. **Set up MongoDB cluster:**
+
+   To use the bot, you'll need to set up a MongoDB cluster with the following schemas to store configuration data.
+
+   ### Required MongoDB Schemas:
+
+   - **envConfig Schema**: Configuration for the bot’s environment (e.g., welcome chat, roles, guild settings).
+   - **matchConfig Schema**: Stores data related to match settings (e.g., current match state, participants).
+   - **playerStats Schema**: Stores player statistics and match results.
+   - **rankings Schema**: Maintains player rankings based on match outcomes.
+
+   Here's an example of the `envConfig` schema:
+
+   ```javascript
+   const { Schema, default: mongoose } = require("mongoose");
+
+   const envSchema = new Schema({
+     Name: { type: String, default: "envConfig" },
+     WelcomeChatID: String,
+     OrgName: { type: String, default: "ORG ACE" },
+     MemberRoleID: String,
+     MediatorRoleId: String,
+     ClientIDCreator: String,
+     ClientIDAssistant: String,
+     GuildID: String,
+     BlackListChatID: String,
+     ReachargeCategoryID: { type: String, default: "" },
+     DefaultThumbNail: { type: String, default: "" },
+     ChannelValue: { type: String, default: "1.80" },
+     LinkToRulesChannel: { type: String, default: "" },
+     TaxToMediator: { type: String, default: "0" },
+   });
+
+   module.exports =
+     mongoose.models.envSchema ||
+     mongoose.model("envConfig", envSchema, "envConfig");
+
+6. **Start the bot:**
 
     ```sh
     npm start
