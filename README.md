@@ -10,6 +10,7 @@ This project was developed using the following technologies:
 
 - [Node.js](https://nodejs.org/)
 - [Discord.js](https://discord.js.org/)
+- [MongoDB](https://www.mongodb.com/)
 
 ## 📦 Installation and Usage
 
